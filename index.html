@@ -691,7 +691,12 @@
         window.switchToAdminView = function() {
             document.getElementById('publicCustomerView').classList.add('hidden');
             document.getElementById('adminView').classList.remove('hidden');
-            window.history.pushState({}, document.title, window.location.pathname);
+            try {
+                window.history.pushState({}, document.title, window.location.pathname);
+            } catch (err) {
+                // Fallback for sandboxed blob URLs / iframe environments where pushState is restricted
+                console.warn("Could not push state to history:", err);
+            }
             renderProducts();
         }
 
