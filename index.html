@@ -61,7 +61,7 @@
                 <!-- Sync status indicator -->
                 <div id="syncBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                     <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span id="syncText">Đang kết nối đám mây...</span>
+                    <span id="syncText">Đang kết nối Firebase...</span>
                 </div>
 
                 <!-- Daily Notification Toggle -->
@@ -87,7 +87,7 @@
         <div id="publicCustomerView" class="hidden max-w-2xl mx-auto">
             <div class="mb-4 flex items-center justify-between">
                 <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> TRA CỨU ĐÁM MÂY CHÍNH HÃNG
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> TRA CỨU FIREBASE CLOUD CHÍNH HÃNG
                 </span>
                 <button onclick="switchToAdminView()" class="text-xs font-semibold text-slate-500 hover:text-emerald-600 flex items-center gap-1">
                     <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Về trang quản trị
@@ -102,7 +102,7 @@
                         <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
                     </div>
                     <h2 class="text-xl sm:text-2xl font-bold tracking-tight" id="publicStatusTitle">Đang đồng bộ dữ liệu...</h2>
-                    <p class="text-xs sm:text-sm opacity-90 mt-1" id="publicStatusSub">Lấy thông tin trực tiếp từ cơ sở dữ liệu đám mây</p>
+                    <p class="text-xs sm:text-sm opacity-90 mt-1" id="publicStatusSub">Lấy thông tin trực tiếp từ cơ sở dữ liệu Firebase</p>
                 </div>
 
                 <div class="p-6 space-y-6">
@@ -188,11 +188,11 @@
                     </div>
                     <div class="flex-1">
                         <h3 class="font-bold text-sm tracking-wide flex items-center gap-2">
-                            <span>THÔNG BÁO CHẤT LƯỢNG HÀNG NGÀY (CLOUD SYNC)</span>
+                            <span>THÔNG BÁO CHẤT LƯỢNG HÀNG NGÀY (FIREBASE SYNC)</span>
                             <span class="text-xs font-normal px-2 py-0.5 bg-white/20 rounded-full" id="todayDateStr">Hôm nay</span>
                         </h3>
                         <p id="dailyDigestContent" class="text-xs sm:text-sm text-emerald-50 mt-1 leading-relaxed">
-                            Đang phân tích dữ liệu kho thực phẩm...
+                            Đang phân tích dữ liệu kho thực phẩm từ Firebase...
                         </p>
                     </div>
                     <button onclick="closeDailyBanner()" class="text-white/80 hover:text-white p-1">
@@ -292,8 +292,8 @@
                 <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
                     <i data-lucide="cloud-off" class="w-8 h-8"></i>
                 </div>
-                <h3 class="font-bold text-slate-700 text-base">Chưa có sản phẩm nào trên đám mây</h3>
-                <p class="text-xs text-slate-500 mt-1">Hãy tích hợp sản phẩm mới để đồng bộ ngay lập tức.</p>
+                <h3 class="font-bold text-slate-700 text-base">Chưa có sản phẩm nào trên Firebase</h3>
+                <p class="text-xs text-slate-500 mt-1">Hãy bấm vào nút bên dưới để thêm sản phẩm đầu tiên lên đám mây.</p>
                 <button onclick="openAddModal()" class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     Tích hợp sản phẩm mới
@@ -327,7 +327,7 @@
                         <input type="text" id="prodCustomId" required placeholder="Ví dụ: milk-vinamilk-01" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono">
                         <button type="button" onclick="generateRandomId()" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-medium hover:bg-slate-200 transition-colors">Tạo ngẫu nhiên</button>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-1">Mã này tạo link QR: `?id=MÃ_NÀY` (Đồng bộ toàn cầu)</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Mã này tạo link QR: `?id=MÃ_NÀY` (Đồng bộ Firebase)</p>
                 </div>
 
                 <!-- Product Name -->
@@ -389,7 +389,7 @@
 
                 <div class="pt-4 flex gap-3 border-t border-slate-100">
                     <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors">Hủy</button>
-                    <button type="submit" id="saveBtn" class="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Lưu lên Cloud</button>
+                    <button type="submit" id="saveBtn" class="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Lưu lên Firebase</button>
                 </div>
             </form>
         </div>
@@ -455,7 +455,7 @@
         </div>
     </div>
 
-    <!-- CUSTOM MODAL FOR CONFIRMATION (NO confirm() used) -->
+    <!-- CUSTOM MODAL FOR CONFIRMATION -->
     <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center">
             <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
@@ -464,7 +464,7 @@
             <h3 class="font-bold text-slate-900 text-lg" id="confirmTitle">Xác nhận xóa</h3>
             <p class="text-xs text-slate-500 mt-1" id="confirmMessage">Bạn có chắc chắn muốn xóa sản phẩm này khỏi Cloud?</p>
             <div class="mt-6 flex gap-3">
-                <button onclick="closeConfirmModal(false)" class="flex-1 py-2.5 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors">Hủy</button>
+                <button onclick="closeConfirmModal()" class="flex-1 py-2.5 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors">Hủy</button>
                 <button id="confirmYesBtn" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition-colors">Xóa vĩnh viễn</button>
             </div>
         </div>
@@ -473,57 +473,46 @@
     <!-- Toast Notifications -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
 
-    <!-- FIREBASE APP & FIRESTORE LOGIC -->
+    <!-- FIREBASE INTEGRATION SCRIPT -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Global environment variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'freshtrack-cloud-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "demo-key",
-            authDomain: "demo.firebaseapp.com",
-            projectId: "demo-project"
+        // Cấu hình Firebase dự án của bạn
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-X8rKO3JmIUIlEYu6npP_mFIdRNY44lo",
+            authDomain: "fresh-track-dt.firebaseapp.com",
+            projectId: "fresh-track-dt",
+            storageBucket: "fresh-track-dt.firebasestorage.app",
+            messagingSenderId: "58585822124",
+            appId: "1:58585822124:web:b8031b035548b83fcf8009",
+            measurementId: "G-MMQRLYB84B"
         };
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
 
         let db = null;
-        let auth = null;
         let products = [];
         let activeQrUrl = "";
         let html5QrcodeScanner = null;
         let notificationsEnabled = false;
-        let currentConfirmCallback = null;
 
-        // Initialize Firebase & Realtime Listener
-        async function initCloudDatabase() {
+        // Khởi tạo Firebase Firestore
+        function initFirebase() {
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
-                auth = getAuth(app);
 
-                // Auth before Firestore queries (Rule 3)
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                updateSyncBadge('online', 'Đã kết nối Cloud');
+                updateSyncBadge('online', '🟢 Đã kết nối Cloud (Realtime DB)');
                 setupRealtimeProductsListener();
             } catch (err) {
-                console.error("Firebase connection error:", err);
-                updateSyncBadge('offline', 'Lỗi kết nối Cloud (Chế độ cục bộ)');
-                loadFallbackSampleProducts();
+                console.error("Firebase Connection Error:", err);
+                updateSyncBadge('offline', '🔴 Lỗi kết nối Cloud');
             }
         }
 
-        // Firestore Public Collection Listener (Rule 1 & Rule 2 compliant)
+        // Lắng nghe dữ liệu thời gian thực từ bộ sưu tập 'products'
         function setupRealtimeProductsListener() {
             if (!db) return;
-            // Strict public path: artifacts/{appId}/public/data/products
-            const productsRef = collection(db, 'artifacts', appId, 'public', 'data', 'products');
+            const productsRef = collection(db, 'products');
             
             onSnapshot(productsRef, (snapshot) => {
                 products = [];
@@ -531,34 +520,33 @@
                     products.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // Sort in memory (Rule 2)
+                // Sắp xếp theo ngày tạo/ngày sản xuất
                 products.sort((a, b) => new Date(b.mfgDate) - new Date(a.mfgDate));
 
-                // Re-render UI & check parameters
                 handleRoutingAndRender();
             }, (error) => {
-                console.error("Firestore snapshot error:", error);
-                showToast("Lỗi đồng bộ dữ liệu thời gian thực", "error");
+                console.error("Firestore error:", error);
+                showToast("Lỗi đồng bộ Firestore: " + error.message, "error");
             });
         }
 
         function updateSyncBadge(status, text) {
             const badge = document.getElementById('syncBadge');
-            if (!badge) return;
+            const textElem = document.getElementById('syncText');
+            if (!badge || !textElem) return;
+
+            textElem.innerText = text;
             if (status === 'online') {
                 badge.className = "hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>${text}</span>`;
             } else {
                 badge.className = "hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200";
-                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>${text}</span>`;
             }
         }
 
-        // Routing & Initialization on Load
         window.onload = function() {
             lucide.createIcons();
             initNotificationsState();
-            initCloudDatabase();
+            initFirebase();
         };
 
         function handleRoutingAndRender() {
@@ -573,30 +561,6 @@
             checkDailyDigest();
         }
 
-        function loadFallbackSampleProducts() {
-            products = [
-                {
-                    id: "milk-vinamilk-01",
-                    barcode: "8934567890123",
-                    name: "Sữa Tươi Thanh Trùng Vinamilk 100% (1L)",
-                    category: "Sữa & Chế phẩm",
-                    lot: "LÔ-VNM-2026",
-                    mfgDate: getRelativeDate(-2, 8),
-                    bestBefore: getRelativeDate(2, 18),
-                    expiry: getRelativeDate(4, 23),
-                    notes: "Giữ lạnh ở 2 - 4°C."
-                }
-            ];
-            handleRoutingAndRender();
-        }
-
-        function getRelativeDate(daysOffset, hours = 12) {
-            const date = new Date();
-            date.setDate(date.getDate() + daysOffset);
-            date.setHours(hours, 0, 0, 0);
-            return date.toISOString().slice(0, 16);
-        }
-
         // Notification Controls
         function initNotificationsState() {
             notificationsEnabled = localStorage.getItem('freshtrack_notif') === 'true';
@@ -607,6 +571,11 @@
             notificationsEnabled = !notificationsEnabled;
             localStorage.setItem('freshtrack_notif', notificationsEnabled ? 'true' : 'false');
             updateNotifUI();
+            
+            if (notificationsEnabled && "Notification" in window) {
+                Notification.requestPermission();
+            }
+            
             showToast(notificationsEnabled ? "Đã bật nhắc nhở chất lượng thực phẩm!" : "Đã tắt nhắc nhở", "success");
         }
 
@@ -694,8 +663,7 @@
             try {
                 window.history.pushState({}, document.title, window.location.pathname);
             } catch (err) {
-                // Fallback for sandboxed blob URLs / iframe environments where pushState is restricted
-                console.warn("Could not push state to history:", err);
+                console.warn("Push state warning:", err);
             }
             renderProducts();
         }
@@ -711,8 +679,7 @@
             const adminView = document.getElementById('adminView');
 
             if (!prod) {
-                showToast(`Không tìm thấy sản phẩm mã "${prodId}" trên Cloud!`, "error");
-                switchToAdminView();
+                showToast(`Đang tải hoặc không tìm thấy mã "${prodId}"`, "info");
                 return;
             }
 
@@ -869,6 +836,7 @@
         window.openAddModal = function() {
             document.getElementById('productForm').reset();
             document.getElementById('prodId').value = '';
+            document.getElementById('prodCustomId').disabled = false;
             document.getElementById('modalTitle').innerText = 'Tích hợp Mã QR Lên Cloud';
             generateRandomId();
 
@@ -892,13 +860,13 @@
 
         window.generateRandomId = function() {
             const rand = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('prodCustomId').value = `fresh-${rand}`;
+            document.getElementById('prodCustomId').value = `sp-${rand}`;
         }
 
         window.saveProductToCloud = async function(e) {
             e.preventDefault();
             if (!db) {
-                showToast("Chưa kết nối được Cloud Database", "error");
+                showToast("Chưa kết nối Firebase", "error");
                 return;
             }
 
@@ -913,17 +881,17 @@
             const notes = document.getElementById('prodNotes').value.trim();
 
             if (new Date(bestBefore) > new Date(expiry)) {
-                showToast("Hạn ngon nhất không nên vượt quá hạn an toàn!", "error");
+                showToast("Hạn ngon nhất không vượt quá hạn an toàn!", "error");
                 return;
             }
 
             const saveBtn = document.getElementById('saveBtn');
             saveBtn.disabled = true;
-            saveBtn.innerText = "Đang lưu lên Cloud...";
+            saveBtn.innerText = "Đang lưu...";
 
             try {
-                // Strict Firestore public path: artifacts/{appId}/public/data/products/{customId}
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', customId);
+                // Lưu sản phẩm vào bộ sưu tập 'products' của Firebase
+                const docRef = doc(db, 'products', customId);
                 await setDoc(docRef, {
                     name,
                     barcode,
@@ -936,14 +904,14 @@
                     updatedAt: new Date().toISOString()
                 });
 
-                showToast("Đã lưu và đồng bộ lên Cloud thành công!", "success");
+                showToast("Đã lưu thành công lên Firebase!", "success");
                 closeAddModal();
             } catch (err) {
                 console.error("Save error:", err);
-                showToast("Lỗi khi lưu lên Cloud: " + err.message, "error");
+                showToast("Lỗi Firestore: " + err.message, "error");
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.innerText = "Lưu lên Cloud";
+                saveBtn.innerText = "Lưu lên Firebase";
             }
         }
 
@@ -953,7 +921,7 @@
 
             document.getElementById('prodId').value = prod.id;
             document.getElementById('prodCustomId').value = prod.id;
-            document.getElementById('prodCustomId').disabled = true; // Can't change ID of existing doc easily
+            document.getElementById('prodCustomId').disabled = true;
             document.getElementById('prodName').value = prod.name;
             document.getElementById('prodBarcode').value = prod.barcode || '';
             document.getElementById('prodCategory').value = prod.category;
@@ -963,24 +931,23 @@
             document.getElementById('prodExpiry').value = prod.expiry;
             document.getElementById('prodNotes').value = prod.notes || '';
 
-            document.getElementById('modalTitle').innerText = 'Chỉnh sửa Sản Phẩm (Cloud)';
+            document.getElementById('modalTitle').innerText = 'Chỉnh sửa Sản Phẩm (Firebase)';
             document.getElementById('addModal').classList.remove('hidden');
         }
 
-        // Custom confirmation modal (No confirm() used)
         window.confirmDeleteProduct = function(id) {
             document.getElementById('confirmTitle').innerText = "Xác nhận xóa sản phẩm";
-            document.getElementById('confirmMessage').innerText = `Bạn có chắc chắn muốn xóa mã "${id}" khỏi đám mây?`;
+            document.getElementById('confirmMessage').innerText = `Bạn có chắc chắn muốn xóa mã "${id}" khỏi Firebase?`;
             
             const yesBtn = document.getElementById('confirmYesBtn');
             yesBtn.onclick = async function() {
                 closeConfirmModal();
                 try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'products', id);
+                    const docRef = doc(db, 'products', id);
                     await deleteDoc(docRef);
-                    showToast("Đã xóa sản phẩm khỏi Cloud", "info");
+                    showToast("Đã xóa khỏi Firebase", "info");
                 } catch(err) {
-                    showToast("Lỗi khi xóa: " + err.message, "error");
+                    showToast("Lỗi xóa: " + err.message, "error");
                 }
             };
 
@@ -1022,17 +989,13 @@
 
         window.copyQrUrl = function() {
             if (!activeQrUrl) return;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(activeQrUrl);
-            } else {
-                const input = document.createElement('input');
-                input.value = activeQrUrl;
-                document.body.appendChild(input);
-                input.select();
-                document.execCommand('copy');
-                document.body.removeChild(input);
-            }
-            showToast("Đã sao chép liên kết URL Cloud!", "success");
+            const input = document.createElement('input');
+            input.value = activeQrUrl;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            showToast("Đã sao chép liên kết URL!", "success");
         }
 
         window.openTestUrl = function() {
@@ -1053,7 +1016,7 @@
                     onScanSuccess, 
                     onScanFailure
                 ).catch(err => {
-                    document.getElementById('reader').innerText = "Không thể mở camera. Hãy nhập mã Product ID thủ công bên dưới.";
+                    document.getElementById('reader').innerText = "Không mở được camera. Vui lòng thử nhập thủ công bên dưới.";
                 });
             }, 300);
         }
@@ -1072,7 +1035,7 @@
 
         function onScanSuccess(decodedText) {
             closeScannerModal();
-            showToast(`Quét thành công: ${decodedText}`, "success");
+            showToast(`Quét thành công`, "success");
             let extractedId = decodedText;
             try {
                 const url = new URL(decodedText);
@@ -1113,10 +1076,10 @@
 
             if (expiredCount > 0 || eatSoonCount > 0) {
                 banner.classList.remove('hidden');
-                if(content) content.innerText = `Cảnh báo đám mây: Có ${expiredCount} sản phẩm hết hạn và ${eatSoonCount} sản phẩm cần dùng ngay!`;
+                if(content) content.innerText = `Cảnh báo Firebase: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng gấp!`;
             } else if (products.length > 0) {
                 banner.classList.remove('hidden');
-                if(content) content.innerText = `Đám mây ghi nhận toàn bộ ${products.length} sản phẩm trong kho đều tươi ngon và an toàn!`;
+                if(content) content.innerText = `Firebase xác nhận tất cả ${products.length} thực phẩm trong kho đều còn rất tươi ngon!`;
             } else {
                 banner.classList.add('hidden');
             }
