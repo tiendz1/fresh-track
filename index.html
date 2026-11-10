@@ -847,7 +847,7 @@
             }
         }
 
-        window.showPublicCustomerView = function(prodId) {
+        function showPublicCustomerView(prodId) {
             const prod = products.find(p => (p.id === prodId || p.barcode === prodId) && p.status !== 'pending');
             const publicView = document.getElementById('publicCustomerView');
             const adminView = document.getElementById('adminView');
@@ -885,4 +885,464 @@
             qrBox.innerHTML = '';
             new QRCode(qrBox, {
                 text: directUrl,
-                width
+                width: 120,
+                height: 120,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // RENDER PRODUCTS GRID
+        window.renderProducts = function() {
+            const container = document.getElementById('productList');
+            const pendingContainer = document.getElementById('pendingProductList');
+            const emptyState = document.getElementById('emptyState');
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const catFilter = document.getElementById('categoryFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            container.innerHTML = '';
+            pendingContainer.innerHTML = '';
+
+            const approvedProducts = products.filter(p => p.status !== 'pending');
+            const pendingProducts = products.filter(p => p.status === 'pending');
+
+            let counts = { total: approvedProducts.length, fresh: 0, eatSoon: 0, expired: 0 };
+
+            approvedProducts.forEach(p => {
+                const st = getProductStatus(p);
+                if (st.code === 'FRESH') counts.fresh++;
+                if (st.code === 'EAT_SOON') counts.eatSoon++;
+                if (st.code === 'EXPIRED') counts.expired++;
+            });
+
+            document.getElementById('statTotal').innerText = counts.total;
+            document.getElementById('statFresh').innerText = counts.fresh;
+            document.getElementById('statEatSoon').innerText = counts.eatSoon;
+            document.getElementById('statExpired').innerText = counts.expired;
+
+            const filtered = approvedProducts.filter(p => {
+                const st = getProductStatus(p);
+                const matchesSearch = p.name.toLowerCase().includes(search) || 
+                                      p.id.toLowerCase().includes(search) || 
+                                      (p.barcode && p.barcode.includes(search));
+                const matchesCat = (catFilter === 'ALL' || p.category === catFilter);
+                const matchesStatus = (statusFilter === 'ALL' || st.code === statusFilter);
+
+                return matchesSearch && matchesCat && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            // Render Kho hàng công khai
+            filtered.forEach(p => {
+                const status = getProductStatus(p);
+                const safeTimeLeft = formatTimeDiff(p.expiry);
+                const bestTimeLeft = formatTimeDiff(p.bestBefore);
+
+                const card = document.createElement('div');
+                card.className = "bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden";
+                card.innerHTML = `
+                    <div class="p-5 flex-1">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <span class="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                ${p.category}
+                            </span>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${status.badgeBg}">
+                                ${status.label}
+                            </span>
+                        </div>
+
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base leading-snug cursor-pointer hover:text-emerald-600 transition-colors" onclick="showPublicCustomerView('${p.id}')">
+                            ${p.name}
+                        </h3>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
+                            <span class="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">ID: ${p.id}</span>
+                            ${p.barcode ? `<span>Barcode: ${p.barcode}</span>` : ''}
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> Ngon nhất:
+                                </span>
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">${bestTimeLeft}</span>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                    <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-500"></i> An toàn:
+                                </span>
+                                <span class="font-bold ${status.code === 'EXPIRED' ? 'text-rose-600' : 'text-slate-800 dark:text-slate-200'}">${safeTimeLeft}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-5 py-3 bg-slate-50 dark:bg-slate-700/50 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
+                        <button onclick="openQrModal('${p.id}')" class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100/70 dark:bg-emerald-950/60 hover:bg-emerald-200 px-3 py-1.5 rounded-xl transition-colors">
+                            <i data-lucide="qr-code" class="w-4 h-4"></i> Mã QR Cloud
+                        </button>
+
+                        <div class="flex gap-1">
+                            <button onclick="showPublicCustomerView('${p.id}')" title="Xem công khai" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            ${isAdminLoggedIn ? `
+                            <button onclick="editProduct('${p.id}')" title="Chỉnh sửa" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="confirmDeleteProduct('${p.id}')" title="Xóa" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Render Danh sách Đề xuất Chờ kiểm duyệt
+            if (isAdminLoggedIn) {
+                pendingProducts.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white dark:bg-slate-800 rounded-2xl border border-amber-300 dark:border-amber-700/60 shadow-sm p-4 space-y-3";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">Chờ duyệt</span>
+                                <h4 class="font-bold text-slate-900 dark:text-white mt-1">${p.name}</h4>
+                            </div>
+                            <span class="text-xs text-slate-400 font-mono">${p.category}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Mã ID đề xuất: <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded">${p.id}</code></p>
+                        <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            <button onclick="approveProduct('${p.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all">
+                                ✓ Phê Duyệt
+                            </button>
+                            <button onclick="confirmDeleteProduct('${p.id}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-rose-500 hover:text-rose-700 text-xs font-bold rounded-lg">
+                                Từ chối
+                            </button>
+                        </div>
+                    `;
+                    pendingContainer.appendChild(card);
+                });
+            }
+
+            lucide.createIcons();
+        }
+
+        // Approve Pending Product Logic
+        window.approveProduct = async function(id) {
+            if (!isAdminLoggedIn) return;
+            try {
+                const docRef = doc(db, 'products', id);
+                await updateDoc(docRef, { status: 'approved' });
+                showToast("Đã duyệt thành công sản phẩm!", "success");
+            } catch (err) {
+                showToast("Lỗi duyệt sản phẩm: " + err.message, "error");
+            }
+        }
+
+        // Form Open Handlers
+        window.openAddModal = function() {
+            document.getElementById('productForm').reset();
+            document.getElementById('prodId').value = '';
+            document.getElementById('isProposeForm').value = "false";
+            document.getElementById('prodCustomId').disabled = false;
+            document.getElementById('modalTitle').innerText = isAdminLoggedIn ? 'Tích hợp Mã QR Lên Cloud (Admin)' : 'Đề xuất sản phẩm mới';
+            generateRandomId();
+
+            const now = new Date();
+            document.getElementById('prodMfgDate').value = now.toISOString().slice(0, 16);
+            
+            const bBefore = new Date(now);
+            bBefore.setDate(bBefore.getDate() + 3);
+            document.getElementById('prodBestBefore').value = bBefore.toISOString().slice(0, 16);
+
+            const exp = new Date(now);
+            exp.setDate(exp.getDate() + 7);
+            document.getElementById('prodExpiry').value = exp.toISOString().slice(0, 16);
+
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        window.openUserProposeModal = function() {
+            openAddModal();
+            document.getElementById('isProposeForm').value = "true";
+            document.getElementById('modalTitle').innerText = 'Đề xuất Thực phẩm Mới (Chờ duyệt)';
+        }
+
+        window.closeAddModal = function() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
+        window.generateRandomId = function() {
+            const rand = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('prodCustomId').value = `sp-${rand}`;
+        }
+
+        window.saveProductToCloud = async function(e) {
+            e.preventDefault();
+            if (!db) {
+                showToast("Chưa kết nối Firebase", "error");
+                return;
+            }
+
+            const isPropose = document.getElementById('isProposeForm').value === "true";
+            const customId = document.getElementById('prodCustomId').value.trim();
+            const name = document.getElementById('prodName').value.trim();
+            const barcode = document.getElementById('prodBarcode').value.trim();
+            const category = document.getElementById('prodCategory').value;
+            const lot = document.getElementById('prodLot').value.trim();
+            const mfgDate = document.getElementById('prodMfgDate').value;
+            const bestBefore = document.getElementById('prodBestBefore').value;
+            const expiry = document.getElementById('prodExpiry').value;
+            const notes = document.getElementById('prodNotes').value.trim();
+
+            if (new Date(bestBefore) > new Date(expiry)) {
+                showToast("Hạn ngon nhất không vượt quá hạn an toàn!", "error");
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Đang lưu...";
+
+            try {
+                const docRef = doc(db, 'products', customId);
+                await setDoc(docRef, {
+                    name,
+                    barcode,
+                    category,
+                    lot,
+                    mfgDate,
+                    bestBefore,
+                    expiry,
+                    notes,
+                    status: (isAdminLoggedIn && !isPropose) ? 'approved' : 'pending',
+                    updatedAt: new Date().toISOString()
+                });
+
+                showToast(isPropose ? "Đã gửi đề xuất! Sản phẩm sẽ được hiển thị sau khi Admin duyệt." : "Đã lưu thành công lên Firebase!", "success");
+                closeAddModal();
+            } catch (err) {
+                console.error("Save error:", err);
+                showToast("Lỗi Firestore: " + err.message, "error");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Lưu lên Firebase";
+            }
+        }
+
+        window.editProduct = function(id) {
+            if (!isAdminLoggedIn) return;
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            document.getElementById('prodId').value = prod.id;
+            document.getElementById('prodCustomId').value = prod.id;
+            document.getElementById('prodCustomId').disabled = true;
+            document.getElementById('prodName').value = prod.name;
+            document.getElementById('prodBarcode').value = prod.barcode || '';
+            document.getElementById('prodCategory').value = prod.category;
+            document.getElementById('prodLot').value = prod.lot || '';
+            document.getElementById('prodMfgDate').value = prod.mfgDate;
+            document.getElementById('prodBestBefore').value = prod.bestBefore;
+            document.getElementById('prodExpiry').value = prod.expiry;
+            document.getElementById('prodNotes').value = prod.notes || '';
+
+            document.getElementById('modalTitle').innerText = 'Chỉnh sửa Sản Phẩm (Admin)';
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        window.confirmDeleteProduct = function(id) {
+            if (!isAdminLoggedIn) return;
+            document.getElementById('confirmTitle').innerText = "Xác nhận xóa sản phẩm";
+            document.getElementById('confirmMessage').innerText = `Bạn có chắc chắn muốn xóa mã "${id}" khỏi Firebase?`;
+            
+            const yesBtn = document.getElementById('confirmYesBtn');
+            yesBtn.onclick = async function() {
+                closeConfirmModal();
+                try {
+                    const docRef = doc(db, 'products', id);
+                    await deleteDoc(docRef);
+                    showToast("Đã xóa khỏi Firebase", "info");
+                } catch(err) {
+                    showToast("Lỗi xóa: " + err.message, "error");
+                }
+            };
+
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        }
+
+        // QR MODAL
+        window.openQrModal = function(id) {
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            const directUrl = getProductDirectUrl(prod.id);
+            activeQrUrl = directUrl;
+
+            document.getElementById('qrModalTitle').innerText = prod.name;
+            document.getElementById('qrModalUrlText').innerText = directUrl;
+
+            const qrBox = document.getElementById('qrRenderBox');
+            qrBox.innerHTML = '';
+            new QRCode(qrBox, {
+                text: directUrl,
+                width: 180,
+                height: 180,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        window.closeQrModal = function() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        window.copyQrUrl = function() {
+            if (!activeQrUrl) return;
+            const input = document.createElement('input');
+            input.value = activeQrUrl;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            showToast("Đã sao chép liên kết URL!", "success");
+        }
+
+        window.openTestUrl = function() {
+            if (activeQrUrl) window.open(activeQrUrl, '_blank');
+        }
+
+        // WEB CAMERA SCANNER
+        window.openScannerModal = function() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            setTimeout(() => {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5Qrcode("reader");
+                }
+                const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    onScanSuccess, 
+                    onScanFailure
+                ).catch(err => {
+                    document.getElementById('reader').innerText = "Không mở được camera. Vui lòng thử nhập thủ công bên dưới.";
+                });
+            }, 300);
+        }
+
+        window.closeScannerModal = function() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scannerModal').classList.add('hidden');
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            closeScannerModal();
+            showToast(`Quét thành công`, "success");
+            let extractedId = decodedText;
+            try {
+                const url = new URL(decodedText);
+                extractedId = url.searchParams.get('id') || url.searchParams.get('code') || decodedText;
+            } catch(e) {}
+            showPublicCustomerView(extractedId);
+        }
+
+        function onScanFailure(error) {}
+
+        window.handleManualScan = function() {
+            const val = document.getElementById('manualScanInput').value.trim();
+            if (val) {
+                closeScannerModal();
+                showPublicCustomerView(val);
+            }
+        }
+
+        // DAILY DIGEST & TOAST
+        function checkDailyDigest() {
+            const now = new Date();
+            const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+            const dateElem = document.getElementById('todayDateStr');
+            if (dateElem) dateElem.innerText = dateStr;
+
+            let expiredCount = 0;
+            let eatSoonCount = 0;
+
+            const approvedProducts = products.filter(p => p.status !== 'pending');
+
+            approvedProducts.forEach(p => {
+                const st = getProductStatus(p);
+                if (st.code === 'EXPIRED') expiredCount++;
+                if (st.code === 'EAT_SOON') eatSoonCount++;
+            });
+
+            const banner = document.getElementById('dailyDigestBanner');
+            const content = document.getElementById('dailyDigestContent');
+            if (!banner) return;
+
+            if (expiredCount > 0 || eatSoonCount > 0) {
+                banner.classList.remove('hidden');
+                if(content) content.innerText = `Cảnh báo Firebase: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng gấp!`;
+            } else if (approvedProducts.length > 0) {
+                banner.classList.remove('hidden');
+                if(content) content.innerText = `Firebase xác nhận tất cả ${approvedProducts.length} thực phẩm trong kho đều còn rất tươi ngon!`;
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        window.closeDailyBanner = function() {
+            document.getElementById('dailyDigestBanner').classList.add('hidden');
+        }
+
+        window.showToast = function(msg, type = "info") {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const toast = document.createElement('div');
+
+            let borderBg = "bg-slate-900 text-white";
+            if (type === "success") borderBg = "bg-emerald-600 text-white";
+            if (type === "error") borderBg = "bg-rose-600 text-white";
+            if (type === "warning") borderBg = "bg-amber-600 text-white";
+
+            toast.className = `${borderBg} px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i data-lucide="info" class="w-4 h-4"><span>${msg}</span>`;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
