@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshTrack - Tra Cứu & Quản Lý Thực Phẩm Qua QR Code</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode.js Library for generating QR Codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- JsBarcode for traditional bar code generation -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- HTML5 QrCode Scanner Library for web camera -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+        }
+        #reader video {
+            object-fit: cover !important;
+            border-radius: 1rem;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col pb-12">
+
+    <!-- Header / Top Bar -->
+    <header class="sticky top-0 z-40 glass-nav border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Logo / Brand -->
+            <a href="index.html" onclick="resetToAdminView(event)" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 group-hover:scale-105 transition-transform">
+                    <i data-lucide="qr-code" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl text-slate-900 leading-tight">FreshTrack</h1>
+                    <p class="text-xs text-slate-500 font-medium">Hệ thống Tra cứu Hạn dùng qua QR</p>
+                </div>
+            </a>
+
+            <!-- Right Nav Actions -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Daily Notification Toggle -->
+                <button id="notifToggleBtn" onclick="toggleDailyNotification()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all border border-slate-200">
+                    <i data-lucide="bell" id="notifIcon" class="w-4 h-4 text-slate-500"></i>
+                    <span id="notifStatusText">Bật thông báo</span>
+                </button>
+
+                <!-- Web Camera Scan Button -->
+                <button onclick="openScannerModal()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all active:scale-95">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Quét QR trên Web</span>
+                    <span class="sm:hidden">Quét</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex-1 w-full">
+
+        <!-- VIEW MODE 1: PUBLIC CUSTOMER LOOKUP VIEW (When opened via ?id=... or scanned by iPhone/Android Camera) -->
+        <div id="publicCustomerView" class="hidden max-w-2xl mx-auto">
+            <div class="mb-4 flex items-center justify-between">
+                <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> XÁC THỰC SẢN PHẨM CHÍNH HÃNG
+                </span>
+                <button onclick="switchToAdminView()" class="text-xs font-semibold text-slate-500 hover:text-emerald-600 flex items-center gap-1">
+                    <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Về trang quản trị
+                </button>
+            </div>
+
+            <!-- Public Product Detail Card -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
+                <!-- Status Banner Top -->
+                <div id="publicStatusBanner" class="p-4 sm:p-6 text-white text-center transition-colors">
+                    <div class="inline-flex p-3 rounded-full bg-white/20 backdrop-blur-md mb-2" id="publicStatusIconBox">
+                        <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-bold tracking-tight" id="publicStatusTitle">Đang kiểm tra...</h2>
+                    <p class="text-xs sm:text-sm opacity-90 mt-1" id="publicStatusSub">Thông tin hạn sử dụng trực tiếp từ nhà sản xuất</p>
+                </div>
+
+                <div class="p-6 space-y-6">
+                    <!-- Title & Category -->
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600" id="publicCategory">Loại thực phẩm</span>
+                            <span class="text-xs font-mono text-slate-400" id="publicLot">Lô: N/A</span>
+                        </div>
+                        <h1 class="text-2xl font-extrabold text-slate-900" id="publicProductName">Tên sản phẩm</h1>
+                        <p class="text-xs font-mono text-slate-500 mt-1 flex items-center gap-1">
+                            <i data-lucide="barcode" class="w-3.5 h-3.5"></i> <span id="publicBarcode">Mã vạch</span>
+                        </p>
+                    </div>
+
+                    <!-- Countdown Metric Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Best Before Card -->
+                        <div class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4">
+                            <div class="flex items-center justify-between text-amber-800 text-xs font-semibold mb-1">
+                                <span class="flex items-center gap-1.5"><i data-lucide="sparkles" class="w-4 h-4 text-amber-600"></i> Ngon nhất trước:</span>
+                            </div>
+                            <div class="text-lg font-bold text-amber-950" id="publicBestBeforeTime">--</div>
+                            <div class="text-xs text-amber-700 mt-1" id="publicBestBeforeDate">Hạn: --</div>
+                        </div>
+
+                        <!-- Safe Expiry Card -->
+                        <div class="bg-rose-50/70 border border-rose-200/80 rounded-2xl p-4">
+                            <div class="flex items-center justify-between text-rose-800 text-xs font-semibold mb-1">
+                                <span class="flex items-center gap-1.5"><i data-lucide="shield-alert" class="w-4 h-4 text-rose-600"></i> An toàn tối đa đến:</span>
+                            </div>
+                            <div class="text-lg font-bold text-rose-950" id="publicSafeExpiryTime">--</div>
+                            <div class="text-xs text-rose-700 mt-1" id="publicSafeExpiryDate">Hạn: --</div>
+                        </div>
+                    </div>
+
+                    <!-- Details Accordion / List -->
+                    <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3 text-xs sm:text-sm">
+                        <div class="flex justify-between py-1 border-b border-slate-200/60">
+                            <span class="text-slate-500">Thời gian sản xuất:</span>
+                            <span class="font-medium text-slate-800" id="publicMfgDate">--</span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-slate-200/60">
+                            <span class="text-slate-500">Khuyên dùng bảo quản:</span>
+                            <span class="font-medium text-slate-800 text-right max-w-[60%]" id="publicNotes">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Notification Subscription Banner for Consumer -->
+                    <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 text-left">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                                <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-slate-900 text-xs sm:text-sm">Theo dõi chất lượng món này</h4>
+                                <p class="text-xs text-slate-600">Nhận nhắc nhở khi sản phẩm sắp hết hạn ngon nhất</p>
+                            </div>
+                        </div>
+                        <button onclick="toggleDailyNotification()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shrink-0">
+                            Bật nhắc nhở
+                        </button>
+                    </div>
+
+                    <!-- Generated QR Code View inside Public Page -->
+                    <div class="pt-4 border-t border-slate-100 text-center">
+                        <p class="text-xs font-medium text-slate-400 mb-3">Mã QR truy cập trực tiếp cho sản phẩm này</p>
+                        <div id="publicQrContainer" class="flex justify-center p-3 bg-white rounded-2xl border border-slate-200 w-max mx-auto shadow-sm"></div>
+                        <p class="text-[11px] font-mono text-slate-400 mt-2 break-all" id="publicDirectUrl">URL: ...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW MODE 2: ADMIN / MANAGEMENT DASHBOARD VIEW -->
+        <div id="adminView" class="space-y-6">
+
+            <!-- Daily Status Digest Alert -->
+            <div id="dailyDigestBanner" class="hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
+                <div class="flex items-start gap-3">
+                    <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md shrink-0">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-sm tracking-wide flex items-center gap-2">
+                            <span>THÔNG BÁO CHẤT LƯỢNG HÀNG NGÀY</span>
+                            <span class="text-xs font-normal px-2 py-0.5 bg-white/20 rounded-full" id="todayDateStr">Hôm nay</span>
+                        </h3>
+                        <p id="dailyDigestContent" class="text-xs sm:text-sm text-emerald-50 mt-1 leading-relaxed">
+                            Đang tự động kiểm tra kho thực phẩm...
+                        </p>
+                    </div>
+                    <button onclick="closeDailyBanner()" class="text-white/80 hover:text-white p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Overview Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="boxes" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Tổng mã thực phẩm</p>
+                        <h4 class="text-xl font-bold text-slate-900" id="statTotal">0</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Tươi ngon nhất</p>
+                        <h4 class="text-xl font-bold text-emerald-600" id="statFresh">0</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="clock" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Nên dùng ngay</p>
+                        <h4 class="text-xl font-bold text-amber-600" id="statEatSoon">0</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-500">Đã hết hạn</p>
+                        <h4 class="text-xl font-bold text-rose-600" id="statExpired">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar / Filters / Add Product -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1">
+                    <!-- Search input -->
+                    <div class="relative flex-1">
+                        <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" oninput="renderProducts()" placeholder="Tìm tên sản phẩm, ID mã QR, mã vạch..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <select id="categoryFilter" onchange="renderProducts()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <option value="ALL">Tất cả danh mục</option>
+                        <option value="Sữa & Chế phẩm">Sữa & Chế phẩm</option>
+                        <option value="Thịt tươi sống">Thịt tươi sống</option>
+                        <option value="Rau củ & Trái cây">Rau củ & Trái cây</option>
+                        <option value="Hải sản tươi">Hải sản tươi</option>
+                        <option value="Đồ đông lạnh">Đồ đông lạnh</option>
+                        <option value="Nước giải khát">Nước giải khát</option>
+                        <option value="Đồ ăn sẵn / Bánh">Đồ ăn sẵn / Bánh</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+
+                    <!-- Status Filter -->
+                    <select id="statusFilter" onchange="renderProducts()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <option value="ALL">Tất cả trạng thái</option>
+                        <option value="FRESH">Tươi ngon nhất</option>
+                        <option value="EAT_SOON">Nên dùng ngay</option>
+                        <option value="EXPIRED">Đã hết hạn</option>
+                    </select>
+                </div>
+
+                <!-- Add New Product Button -->
+                <button onclick="openAddModal()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all active:scale-95 shrink-0">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>Tích hợp mã QR mới</span>
+                </button>
+            </div>
+
+            <!-- Product Grid -->
+            <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Dynamic Product Cards -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
+                    <i data-lucide="package-search" class="w-8 h-8"></i>
+                </div>
+                <h3 class="font-bold text-slate-700 text-base">Không tìm thấy sản phẩm nào</h3>
+                <p class="text-xs text-slate-500 mt-1">Hãy tích hợp sản phẩm mới hoặc thử tìm từ khóa khác.</p>
+                <button onclick="openAddModal()" class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Tích hợp mã QR mới
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: ADD / EDIT PRODUCT -->
+    <div id="addModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                        <i data-lucide="qr-code" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-900 text-lg" id="modalTitle">Tích hợp Mã QR Sản Phẩm</h3>
+                </div>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="productForm" onsubmit="saveProduct(event)" class="p-6 space-y-4">
+                <input type="hidden" id="prodId">
+                
+                <!-- Product ID (Used for QR Link) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Mã Định Danh QR (Product ID) *</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="prodCustomId" required placeholder="Ví dụ: milk-vinamilk-01" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono">
+                        <button type="button" onclick="generateRandomId()" class="px-3 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-medium hover:bg-slate-200 transition-colors">Tạo ngẫu nhiên</button>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Mã này dùng để tạo đường dẫn link QR: `?id=MÃ_NÀY`</p>
+                </div>
+
+                <!-- Product Name -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Tên Thực Phẩm *</label>
+                    <input type="text" id="prodName" required placeholder="Ví dụ: Sữa tươi thanh trùng 1L" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+
+                <!-- Barcode Number (Optional) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Mã Vạch Sản Phẩm (EAN / Barcode)</label>
+                    <input type="text" id="prodBarcode" placeholder="8934567890123" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Loại Thực Phẩm *</label>
+                    <select id="prodCategory" required class="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <option value="Sữa & Chế phẩm">Sữa & Chế phẩm</option>
+                        <option value="Thịt tươi sống">Thịt tươi sống</option>
+                        <option value="Rau củ & Trái cây">Rau củ & Trái cây</option>
+                        <option value="Hải sản tươi">Hải sản tươi</option>
+                        <option value="Đồ đông lạnh">Đồ đông lạnh</option>
+                        <option value="Nước giải khát">Nước giải khát</option>
+                        <option value="Đồ ăn sẵn / Bánh">Đồ ăn sẵn / Bánh</option>
+                        <option value="Khác">Khác</option>
+                    </select>
+                </div>
+
+                <!-- Lot Number & Mfg Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Số Lô Sản Xuất (Lot)</label>
+                        <input type="text" id="prodLot" placeholder="LÔ-2026-01" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Thời gian Sản xuất *</label>
+                        <input type="datetime-local" id="prodMfgDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Best Before & Safe Expiry -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">Ngon nhất đến ngày *</label>
+                        <input type="datetime-local" id="prodBestBefore" required class="w-full bg-amber-50/50 border border-amber-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-rose-700 uppercase tracking-wider mb-1">Hạn An toàn tối đa *</label>
+                        <input type="datetime-local" id="prodExpiry" required class="w-full bg-rose-50/50 border border-rose-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500">
+                    </div>
+                </div>
+
+                <!-- Notes / Storage Instructions -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Hướng dẫn bảo quản</label>
+                    <input type="text" id="prodNotes" placeholder="VD: Khay ngăn mát tủ lạnh, nhiệt độ 2-4°C" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+
+                <div class="pt-4 flex gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeAddModal()" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-600 text-sm font-semibold hover:bg-slate-50 transition-colors">Hủy</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-all">Lưu sản phẩm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: QR CODE GENERATOR & PRINT / DOWNLOAD -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl text-center relative">
+            <button onclick="closeQrModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="qr-code" class="w-6 h-6"></i>
+            </div>
+            
+            <h3 class="font-bold text-slate-900 text-lg" id="qrModalTitle">Mã QR Sản Phẩm</h3>
+            <p class="text-xs text-slate-500 mt-1">Dán mã này lên bao bì. Người dùng quét bằng Camera iPhone/Android sẽ được dẫn trực tiếp đến thông tin hạn dùng.</p>
+
+            <!-- Render QR Code Image -->
+            <div class="my-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center">
+                <div id="qrRenderBox" class="p-2 bg-white rounded-xl shadow-sm"></div>
+                <p class="text-[11px] font-mono text-slate-500 mt-3 break-all max-w-full px-2" id="qrModalUrlText">URL...</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="copyQrUrl()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                    <i data-lucide="copy" class="w-4 h-4"></i> Sao chép URL
+                </button>
+                <button onclick="openTestUrl()" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Thử mở Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CAMERA SCANNER ON WEB -->
+    <div id="scannerModal" class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="camera" class="w-5 h-5 text-emerald-600"></i>
+                    <h3 class="font-bold text-slate-900 text-lg">Quét Mã QR Sản Phẩm</h3>
+                </div>
+                <button onclick="closeScannerModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Camera Display -->
+            <div id="reader" class="w-full bg-slate-900 rounded-2xl overflow-hidden border-2 border-dashed border-emerald-500/50 min-h-[250px] flex items-center justify-center text-slate-400 text-xs"></div>
+
+            <p class="text-xs text-slate-500 text-center mt-3">Đưa mã QR trên bao bì hoặc trên màn hình vào giữa camera.</p>
+
+            <!-- Manual Lookup Input -->
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <p class="text-xs font-semibold text-slate-600 mb-2">Hoặc nhập Product ID để thử nghiệm:</p>
+                <div class="flex gap-2">
+                    <input type="text" id="manualScanInput" placeholder="Ví dụ: milk-vinamilk-01" class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-mono">
+                    <button onclick="handleManualScan()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">Mở ngay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- JS LOGIC -->
+    <script>
+        // Sample Mock Products Initialized
+        const sampleProducts = [
+            {
+                id: "milk-vinamilk-01",
+                barcode: "8934567890123",
+                name: "Sữa Tươi Thanh Trùng Vinamilk 100% (1L)",
+                category: "Sữa & Chế phẩm",
+                lot: "LÔ-VNM-2026",
+                mfgDate: getRelativeDate(-2, 8),
+                bestBefore: getRelativeDate(2, 18), // Còn 2 ngày ngon nhất
+                expiry: getRelativeDate(4, 23), // Còn 4 ngày an toàn
+                notes: "Giữ lạnh ở 2 - 4°C. Dùng trong 3 ngày sau khi mở nắp."
+            },
+            {
+                id: "pork-vissan-02",
+                barcode: "8935001234567",
+                name: "Thịt Heo Tươi Vissan (Đùi 500g)",
+                category: "Thịt tươi sống",
+                lot: "LÔ-VIS-88",
+                mfgDate: getRelativeDate(-3, 6),
+                bestBefore: getRelativeDate(0, 12), // Hôm nay hết hạn ngon nhất
+                expiry: getRelativeDate(1, 19), // Còn 1 ngày an toàn
+                notes: "Bảo quản ngăn mát hoặc trữ đông dưới -18°C."
+            },
+            {
+                id: "vege-dalat-03",
+                barcode: "8936098765432",
+                name: "Rau Cải Thìa Hữu Cơ Đà Lạt",
+                category: "Rau củ & Trái cây",
+                lot: "LÔ-DL-90",
+                mfgDate: getRelativeDate(-6, 7),
+                bestBefore: getRelativeDate(-1, 10), // Quá hạn ngon
+                expiry: getRelativeDate(-1, 20), // Quá hạn an toàn
+                notes: "Rửa sạch trước khi chế biến."
+            }
+        ];
+
+        function getRelativeDate(daysOffset, hours = 12) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysOffset);
+            date.setHours(hours, 0, 0, 0);
+            return date.toISOString().slice(0, 16);
+        }
+
+        // Global State
+        let products = [];
+        let activeQrUrl = "";
+        let html5QrcodeScanner = null;
+        let notificationsEnabled = false;
+
+        window.onload = function() {
+            lucide.createIcons();
+            loadProducts();
+            initNotificationsState();
+            
+            // Check if user accessed directly via URL ?id=... or ?code=...
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('id') || urlParams.get('code');
+
+            if (targetId) {
+                // Direct lookup mode via QR URL Scan
+                showPublicCustomerView(targetId);
+            } else {
+                // Default Admin Dashboard View
+                switchToAdminView();
+            }
+
+            checkDailyDigest();
+        };
+
+        // Storage Management
+        function loadProducts() {
+            const stored = localStorage.getItem('freshtrack_qr_products');
+            if (stored) {
+                try {
+                    products = JSON.parse(stored);
+                } catch(e) {
+                    products = sampleProducts;
+                }
+            } else {
+                products = sampleProducts;
+                saveProductsToStorage();
+            }
+        }
+
+        function saveProductsToStorage() {
+            localStorage.setItem('freshtrack_qr_products', JSON.stringify(products));
+        }
+
+        // Notification Controls
+        function initNotificationsState() {
+            notificationsEnabled = localStorage.getItem('freshtrack_notif') === 'true';
+            updateNotifUI();
+        }
+
+        function toggleDailyNotification() {
+            if (!notificationsEnabled) {
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            notificationsEnabled = true;
+                            localStorage.setItem('freshtrack_notif', 'true');
+                            showToast("Đã bật nhận thông báo chất lượng!", "success");
+                            updateNotifUI();
+                        } else {
+                            showToast("Trình duyệt từ chối quyền thông báo", "warning");
+                        }
+                    });
+                } else {
+                    notificationsEnabled = true;
+                    localStorage.setItem('freshtrack_notif', 'true');
+                    updateNotifUI();
+                    showToast("Đã bật thông báo!", "success");
+                }
+            } else {
+                notificationsEnabled = false;
+                localStorage.setItem('freshtrack_notif', 'false');
+                updateNotifUI();
+                showToast("Đã tắt thông báo", "info");
+            }
+        }
+
+        function updateNotifUI() {
+            const btn = document.getElementById('notifToggleBtn');
+            const icon = document.getElementById('notifIcon');
+            const text = document.getElementById('notifStatusText');
+
+            if (notificationsEnabled) {
+                btn.className = "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
+                icon.className = "w-4 h-4 text-emerald-600 fill-emerald-600";
+                text.innerText = "Thông báo: BẬT";
+            } else {
+                btn.className = "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200";
+                icon.className = "w-4 h-4 text-slate-500";
+                text.innerText = "Bật thông báo";
+            }
+        }
+
+        // Calculate Status & Time Remaining
+        function getProductStatus(prod) {
+            const now = new Date();
+            const expiryDate = new Date(prod.expiry);
+            const bestBeforeDate = new Date(prod.bestBefore);
+
+            if (now > expiryDate) {
+                return { 
+                    code: 'EXPIRED', 
+                    label: 'ĐÃ HẾT HẠN - KHÔNG AN TOÀN', 
+                    badgeBg: 'bg-rose-100 text-rose-700 border-rose-200', 
+                    bannerBg: 'bg-rose-600',
+                    icon: 'alert-octagon'
+                };
+            } else if (now > bestBeforeDate) {
+                return { 
+                    code: 'EAT_SOON', 
+                    label: 'NÊN DÙNG NGAY (Hết hạn ngon nhất)', 
+                    badgeBg: 'bg-amber-100 text-amber-800 border-amber-200', 
+                    bannerBg: 'bg-amber-500',
+                    icon: 'clock'
+                };
+            } else {
+                return { 
+                    code: 'FRESH', 
+                    label: 'TƯƠI NGON RẤT AN TOÀN', 
+                    badgeBg: 'bg-emerald-100 text-emerald-700 border-emerald-200', 
+                    bannerBg: 'bg-emerald-600',
+                    icon: 'shield-check'
+                };
+            }
+        }
+
+        function formatTimeDiff(targetDateStr) {
+            const target = new Date(targetDateStr);
+            const now = new Date();
+            const diffMs = target - now;
+
+            if (diffMs < 0) {
+                const pastMs = Math.abs(diffMs);
+                const days = Math.floor(pastMs / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((pastMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                if (days > 0) return `Quá ${days} ngày ${hours}h`;
+                return `Quá ${hours} giờ`;
+            }
+
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            if (days > 0) return `Còn ${days} ngày ${hours}h`;
+            return `Còn ${hours} giờ`;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const d = new Date(dateStr);
+            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        // DYNAMIC URL GENERATOR FOR QR
+        function getProductDirectUrl(prodId) {
+            const baseUrl = window.location.origin + window.location.pathname;
+            return `${baseUrl}?id=${encodeURIComponent(prodId)}`;
+        }
+
+        // VIEW SWITCHING LOGIC
+        function switchToAdminView() {
+            document.getElementById('publicCustomerView').classList.add('hidden');
+            document.getElementById('adminView').classList.remove('hidden');
+            renderProducts();
+        }
+
+        function resetToAdminView(e) {
+            e.preventDefault();
+            window.history.pushState({}, document.title, window.location.pathname);
+            switchToAdminView();
+        }
+
+        function showPublicCustomerView(prodId) {
+            const prod = products.find(p => p.id === prodId || p.barcode === prodId);
+            const publicView = document.getElementById('publicCustomerView');
+            const adminView = document.getElementById('adminView');
+
+            if (!prod) {
+                showToast(`Không tìm thấy sản phẩm với ID "${prodId}"!`, "error");
+                switchToAdminView();
+                return;
+            }
+
+            adminView.classList.add('hidden');
+            publicView.classList.remove('hidden');
+
+            const status = getProductStatus(prod);
+
+            // Populate Public Card UI
+            document.getElementById('publicStatusBanner').className = `p-6 text-white text-center transition-colors ${status.bannerBg}`;
+            document.getElementById('publicStatusTitle').innerText = status.label;
+            document.getElementById('publicProductName').innerText = prod.name;
+            document.getElementById('publicCategory').innerText = prod.category;
+            document.getElementById('publicLot').innerText = prod.lot ? `Số lô: ${prod.lot}` : '';
+            document.getElementById('publicBarcode').innerText = prod.barcode || prod.id;
+
+            document.getElementById('publicBestBeforeTime').innerText = formatTimeDiff(prod.bestBefore);
+            document.getElementById('publicBestBeforeDate').innerText = `Hạn: ${formatDate(prod.bestBefore)}`;
+
+            document.getElementById('publicSafeExpiryTime').innerText = formatTimeDiff(prod.expiry);
+            document.getElementById('publicSafeExpiryDate').innerText = `Hạn an toàn: ${formatDate(prod.expiry)}`;
+
+            document.getElementById('publicMfgDate').innerText = formatDate(prod.mfgDate);
+            document.getElementById('publicNotes').innerText = prod.notes || 'Bảo quản nơi khô ráo thoáng mát';
+
+            const directUrl = getProductDirectUrl(prod.id);
+            document.getElementById('publicDirectUrl').innerText = directUrl;
+
+            // Render QR Code Image inside Public Page
+            const qrBox = document.getElementById('publicQrContainer');
+            qrBox.innerHTML = '';
+            new QRCode(qrBox, {
+                text: directUrl,
+                width: 120,
+                height: 120,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // RENDER ADMIN LIST & DASHBOARD
+        function renderProducts() {
+            const container = document.getElementById('productList');
+            const emptyState = document.getElementById('emptyState');
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const catFilter = document.getElementById('categoryFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            container.innerHTML = '';
+
+            let counts = { total: products.length, fresh: 0, eatSoon: 0, expired: 0 };
+
+            products.forEach(p => {
+                const st = getProductStatus(p);
+                if (st.code === 'FRESH') counts.fresh++;
+                if (st.code === 'EAT_SOON') counts.eatSoon++;
+                if (st.code === 'EXPIRED') counts.expired++;
+            });
+
+            document.getElementById('statTotal').innerText = counts.total;
+            document.getElementById('statFresh').innerText = counts.fresh;
+            document.getElementById('statEatSoon').innerText = counts.eatSoon;
+            document.getElementById('statExpired').innerText = counts.expired;
+
+            const filtered = products.filter(p => {
+                const st = getProductStatus(p);
+                const matchesSearch = p.name.toLowerCase().includes(search) || 
+                                      p.id.toLowerCase().includes(search) || 
+                                      (p.barcode && p.barcode.includes(search));
+                const matchesCat = (catFilter === 'ALL' || p.category === catFilter);
+                const matchesStatus = (statusFilter === 'ALL' || st.code === statusFilter);
+
+                return matchesSearch && matchesCat && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(p => {
+                const status = getProductStatus(p);
+                const safeTimeLeft = formatTimeDiff(p.expiry);
+                const bestTimeLeft = formatTimeDiff(p.bestBefore);
+                const directUrl = getProductDirectUrl(p.id);
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden";
+                card.innerHTML = `
+                    <div class="p-5 flex-1">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <span class="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
+                                ${p.category}
+                            </span>
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${status.badgeBg}">
+                                ${status.label}
+                            </span>
+                        </div>
+
+                        <h3 class="font-bold text-slate-900 text-base leading-snug cursor-pointer hover:text-emerald-600 transition-colors" onclick="showPublicCustomerView('${p.id}')">
+                            ${p.name}
+                        </h3>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 font-mono">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-700">ID: ${p.id}</span>
+                            ${p.barcode ? `<span>Mã vạch: ${p.barcode}</span>` : ''}
+                        </div>
+
+                        <!-- Progress / Time Indicators -->
+                        <div class="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 flex items-center gap-1">
+                                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> Ngon nhất:
+                                </span>
+                                <span class="font-semibold text-slate-700">${bestTimeLeft}</span>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 flex items-center gap-1">
+                                    <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-rose-500"></i> An toàn:
+                                </span>
+                                <span class="font-bold ${status.code === 'EXPIRED' ? 'text-rose-600' : 'text-slate-800'}">${safeTimeLeft}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Controls -->
+                    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <button onclick="openQrModal('${p.id}')" class="flex items-center gap-1.5 text-emerald-700 font-bold bg-emerald-100/70 hover:bg-emerald-200 px-3 py-1.5 rounded-xl transition-colors">
+                            <i data-lucide="qr-code" class="w-4 h-4"></i> Mã QR URL
+                        </button>
+
+                        <div class="flex gap-1">
+                            <button onclick="showPublicCustomerView('${p.id}')" title="Xem trang khách hàng" class="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="editProduct('${p.id}')" title="Chỉnh sửa" class="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="deleteProduct('${p.id}')" title="Xóa" class="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        // ADD / EDIT FORM LOGIC
+        function openAddModal() {
+            document.getElementById('productForm').reset();
+            document.getElementById('prodId').value = '';
+            document.getElementById('modalTitle').innerText = 'Tích hợp Mã QR Sản Phẩm';
+            
+            generateRandomId();
+
+            const now = new Date();
+            document.getElementById('prodMfgDate').value = now.toISOString().slice(0, 16);
+            
+            const bBefore = new Date(now);
+            bBefore.setDate(bBefore.getDate() + 3);
+            document.getElementById('prodBestBefore').value = bBefore.toISOString().slice(0, 16);
+
+            const exp = new Date(now);
+            exp.setDate(exp.getDate() + 7);
+            document.getElementById('prodExpiry').value = exp.toISOString().slice(0, 16);
+
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
+        function generateRandomId() {
+            const rand = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('prodCustomId').value = `prod-${rand}`;
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const editId = document.getElementById('prodId').value;
+            const customId = document.getElementById('prodCustomId').value.trim();
+            const name = document.getElementById('prodName').value.trim();
+            const barcode = document.getElementById('prodBarcode').value.trim();
+            const category = document.getElementById('prodCategory').value;
+            const lot = document.getElementById('prodLot').value.trim();
+            const mfgDate = document.getElementById('prodMfgDate').value;
+            const bestBefore = document.getElementById('prodBestBefore').value;
+            const expiry = document.getElementById('prodExpiry').value;
+            const notes = document.getElementById('prodNotes').value.trim();
+
+            if (new Date(bestBefore) > new Date(expiry)) {
+                showToast("Hạn dùng ngon nhất không nên vượt quá Hạn an toàn!", "error");
+                return;
+            }
+
+            if (editId) {
+                // Edit existing
+                const idx = products.findIndex(p => p.id === editId);
+                if (idx !== -1) {
+                    products[idx] = { id: customId, barcode, name, category, lot, mfgDate, bestBefore, expiry, notes };
+                    showToast("Đã cập nhật sản phẩm!", "success");
+                }
+            } else {
+                // Check duplicate ID
+                if (products.some(p => p.id === customId)) {
+                    showToast("Mã Product ID này đã tồn tại, hãy đổi mã khác!", "error");
+                    return;
+                }
+                const newProd = { id: customId, barcode, name, category, lot, mfgDate, bestBefore, expiry, notes };
+                products.unshift(newProd);
+                showToast("Đã tích hợp sản phẩm mã QR mới!", "success");
+            }
+
+            saveProductsToStorage();
+            renderProducts();
+            closeAddModal();
+            checkDailyDigest();
+        }
+
+        function editProduct(id) {
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            document.getElementById('prodId').value = prod.id;
+            document.getElementById('prodCustomId').value = prod.id;
+            document.getElementById('prodName').value = prod.name;
+            document.getElementById('prodBarcode').value = prod.barcode || '';
+            document.getElementById('prodCategory').value = prod.category;
+            document.getElementById('prodLot').value = prod.lot || '';
+            document.getElementById('prodMfgDate').value = prod.mfgDate;
+            document.getElementById('prodBestBefore').value = prod.bestBefore;
+            document.getElementById('prodExpiry').value = prod.expiry;
+            document.getElementById('prodNotes').value = prod.notes || '';
+
+            document.getElementById('modalTitle').innerText = 'Chỉnh sửa Sản Phẩm';
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+
+        function deleteProduct(id) {
+            if (confirm("Bạn có chắc chắn muốn xóa mã sản phẩm này khỏi cơ sở dữ liệu?")) {
+                products = products.filter(p => p.id !== id);
+                saveProductsToStorage();
+                renderProducts();
+                showToast("Đã xóa sản phẩm", "info");
+                checkDailyDigest();
+            }
+        }
+
+        // QR CODE MODAL & GENERATOR
+        function openQrModal(id) {
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            const directUrl = getProductDirectUrl(prod.id);
+            activeQrUrl = directUrl;
+
+            document.getElementById('qrModalTitle').innerText = prod.name;
+            document.getElementById('qrModalUrlText').innerText = directUrl;
+
+            const qrBox = document.getElementById('qrRenderBox');
+            qrBox.innerHTML = '';
+
+            // Generate QR Code with qrcodejs
+            new QRCode(qrBox, {
+                text: directUrl,
+                width: 180,
+                height: 180,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function copyQrUrl() {
+            if (!activeQrUrl) return;
+            
+            // Clipboard fallback
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(activeQrUrl);
+            } else {
+                const input = document.createElement('input');
+                input.value = activeQrUrl;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+            }
+            showToast("Đã sao chép liên kết URL!", "success");
+        }
+
+        function openTestUrl() {
+            if (activeQrUrl) {
+                window.open(activeQrUrl, '_blank');
+            }
+        }
+
+        // WEB SCANNER LOGIC
+        function openScannerModal() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            setTimeout(() => {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5Qrcode("reader");
+                }
+                const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    config, 
+                    onScanSuccess, 
+                    onScanFailure
+                ).catch(err => {
+                    document.getElementById('reader').innerText = "Không thể mở camera. Bạn có thể nhập mã ID thủ công bên dưới.";
+                });
+            }, 300);
+        }
+
+        function closeScannerModal() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scannerModal').classList.add('hidden');
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            closeScannerModal();
+            showToast(`Đã quét: ${decodedText}`, "success");
+
+            // Extract ?id= from decoded URL if full URL was scanned
+            let extractedId = decodedText;
+            try {
+                const url = new URL(decodedText);
+                extractedId = url.searchParams.get('id') || url.searchParams.get('code') || decodedText;
+            } catch(e) {
+                // Scanned plain text ID
+            }
+
+            showPublicCustomerView(extractedId);
+        }
+
+        function onScanFailure(error) {}
+
+        function handleManualScan() {
+            const val = document.getElementById('manualScanInput').value.trim();
+            if (val) {
+                closeScannerModal();
+                showPublicCustomerView(val);
+            }
+        }
+
+        // DAILY DIGEST & TOAST
+        function checkDailyDigest() {
+            const now = new Date();
+            const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+            document.getElementById('todayDateStr').innerText = dateStr;
+
+            let expiredCount = 0;
+            let eatSoonCount = 0;
+
+            products.forEach(p => {
+                const st = getProductStatus(p);
+                if (st.code === 'EXPIRED') expiredCount++;
+                if (st.code === 'EAT_SOON') eatSoonCount++;
+            });
+
+            const banner = document.getElementById('dailyDigestBanner');
+            const content = document.getElementById('dailyDigestContent');
+
+            if (expiredCount > 0 || eatSoonCount > 0) {
+                banner.classList.remove('hidden');
+                content.innerText = `Cảnh báo: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng ngay để đảm bảo vị tươi ngon!`;
+            } else if (products.length > 0) {
+                banner.classList.remove('hidden');
+                content.innerText = `Tất cả ${products.length} thực phẩm trong kho của bạn hiện đều đạt chất lượng tươi ngon và an toàn!`;
+            } else {
+                banner.classList.add('hidden');
+            }
+        }
+
+        function closeDailyBanner() {
+            document.getElementById('dailyDigestBanner').classList.add('hidden');
+        }
+
+        function showToast(msg, type = "info") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let borderBg = "bg-slate-900 text-white";
+            if (type === "success") borderBg = "bg-emerald-600 text-white";
+            if (type === "error") borderBg = "bg-rose-600 text-white";
+            if (type === "warning") borderBg = "bg-amber-600 text-white";
+
+            toast.className = `${borderBg} px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i data-lucide="info" class="w-4 h-4"></i> <span>${msg}</span>`;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
