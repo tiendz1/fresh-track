@@ -1252,7 +1252,10 @@
         // Upgraded Code Generation to 6 Digits (e.g., sp-012345)
         window.generateRandomId = function() {
             const rand6Digit = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
-            document.getElementById('prodCustomId').value = `sp-${rand6Digit}`;
+            const inputEl = document.getElementById('prodCustomId');
+            if (inputEl) {
+                inputEl.value = `sp-${rand6Digit}`;
+            }
         }
 
         window.saveProductToCloud = async function(e) {
@@ -1263,13 +1266,14 @@
             }
 
             const isPropose = document.getElementById('isProposeForm').value === "true";
-            // Get ID reliably even if input field is disabled during edit mode
-            const hiddenId = document.getElementById('prodId').value.trim();
-            const inputId = document.getElementById('prodCustomId').value.trim();
-            const customId = inputId || hiddenId;
+            // Lay ID va xoa tat ca khoang trang thua
+            const hiddenId = (document.getElementById('prodId').value || '').trim();
+            const inputId = (document.getElementById('prodCustomId').value || '').trim();
+            let rawId = inputId || hiddenId;
+            const customId = rawId.replace(/\s+/g, '');
 
             if (!customId) {
-                showToast("Vui lòng nhập hoặc tạo Mã Định Danh QR!", "error");
+                showToast("Vui lòng nhập hoặc tạo Mã Định Danh QR hợp lệ!", "error");
                 return;
             }
 
