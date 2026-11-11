@@ -50,21 +50,35 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-12 transition-colors duration-200">
+<body id="appBody" class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-12 transition-colors duration-200">
+
+    <!-- Admin Mode Visual Banner Indicator -->
+    <div id="adminModeBanner" class="hidden bg-emerald-700 text-white text-xs font-bold py-1.5 px-4 text-center tracking-wider flex items-center justify-center gap-2">
+        <i data-lucide="shield-alert" class="w-4 h-4"></i>
+        <span>CHẾ ĐỘ QUẢN TRỊ VIÊN (ADMINISTRATOR MODE) - ĐÃ BẬT TOÀN QUYỀN KIỂM DUYỆT & QUẢN LÝ KHO HÀNG</span>
+    </div>
 
     <!-- Header / Top Bar -->
     <header class="sticky top-0 z-40 glass-nav bg-white/90 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <!-- Logo / Brand -->
-            <a href="index.html" onclick="resetToAdminView(event)" class="flex items-center gap-3 group">
-                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 dark:shadow-none group-hover:scale-105 transition-transform">
-                    <i data-lucide="cloud-cog" class="w-6 h-6"></i>
+            <!-- Logo / Brand & Live Clock -->
+            <div class="flex items-center gap-4">
+                <a href="index.html" onclick="resetToAdminView(event)" class="flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-200 dark:shadow-none group-hover:scale-105 transition-transform">
+                        <i data-lucide="cloud-cog" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-xl text-slate-900 dark:text-white leading-tight">FreshTrack</h1>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hệ thống Đám mây Đồng bộ Thời gian thực</p>
+                    </div>
+                </a>
+                
+                <!-- Live Realtime Clock Widget -->
+                <div class="hidden md:flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-700/70 border border-slate-200 dark:border-slate-600 rounded-xl text-xs font-mono font-semibold text-slate-700 dark:text-slate-200">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse"></i>
+                    <span id="liveClockDisplay">--:--:-- --/--/----</span>
                 </div>
-                <div>
-                    <h1 class="font-bold text-xl text-slate-900 dark:text-white leading-tight">FreshTrack</h1>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hệ thống Đám mây Đồng bộ Thời gian thực</p>
-                </div>
-            </a>
+            </div>
 
             <!-- Right Nav Actions -->
             <div class="flex items-center gap-2 sm:gap-3">
@@ -207,8 +221,8 @@
         <!-- VIEW MODE 2: MAIN USER & ADMIN MANAGEMENT VIEW -->
         <div id="adminView" class="space-y-6">
 
-            <!-- Customer Hero Banner & Propose Action -->
-            <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+            <!-- Customer Hero Banner (Solid Tone style) -->
+            <div class="bg-emerald-700 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="space-y-1.5 text-center md:text-left">
                     <span class="inline-block px-3 py-0.5 rounded-full bg-white/20 text-xs font-bold tracking-wide uppercase">Tra cứu Realtime</span>
                     <h2 class="text-2xl font-bold tracking-tight">Hệ thống Tra cứu & Đề xuất Thực phẩm</h2>
@@ -220,14 +234,14 @@
                     <button onclick="openScannerModal()" class="px-5 py-2.5 bg-white text-emerald-800 rounded-xl font-bold text-xs sm:text-sm hover:bg-emerald-50 transition shadow active:scale-95">
                         📷 Quét Mã QR Camera
                     </button>
-                    <button onclick="openUserProposeModal()" class="px-5 py-2.5 bg-emerald-800/70 hover:bg-emerald-800 text-white border border-emerald-400/40 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95">
+                    <button onclick="openUserProposeModal()" class="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white border border-emerald-400/40 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95">
                         ✍️ Đề xuất món mới
                     </button>
                 </div>
             </div>
 
             <!-- Daily Status Digest Alert -->
-            <div id="dailyDigestBanner" class="hidden bg-emerald-600 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
+            <div id="dailyDigestBanner" class="hidden bg-emerald-700 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
                 <div class="flex items-start gap-3">
                     <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md shrink-0">
                         <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i>
@@ -334,7 +348,7 @@
                     </select>
                 </div>
 
-                <!-- Add New Product Button (Only visible/active for Admin or opens modal) -->
+                <!-- Add New Product Button -->
                 <button id="addNewBtn" onclick="openAddModal()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all active:scale-95 shrink-0">
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     <span>Tích hợp mã QR lên Cloud</span>
@@ -343,7 +357,29 @@
 
             <!-- Tab 1: Product Grid -->
             <div id="tabInventory" class="space-y-4">
-                <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Skeleton Loading State -->
+                    <div id="skeletonLoader" class="contents">
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 animate-pulse">
+                            <div class="flex justify-between items-center"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div></div>
+                            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 animate-pulse hidden md:block">
+                            <div class="flex justify-between items-center"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div></div>
+                            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 animate-pulse hidden lg:block">
+                            <div class="flex justify-between items-center"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div></div>
+                            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Tab 2: Pending Approval Grid (Admin Mode) -->
@@ -574,7 +610,7 @@
         };
 
         const ADMIN_PIN = "1352010";
-        let isAdminLoggedIn = false;
+        let isAdminLoggedIn = localStorage.getItem('freshtrack_admin_auth') === 'true';
 
         let db = null;
         let products = [];
@@ -630,7 +666,7 @@
             }
         }
 
-        // Admin Auth Modal Logic
+        // Admin Auth Modal Logic with Instant Refresh
         window.openAdminLoginModal = function() {
             document.getElementById('adminPinInput').value = '';
             document.getElementById('adminLoginModal').classList.remove('hidden');
@@ -643,26 +679,57 @@
         window.submitAdminLogin = function() {
             const pin = document.getElementById('adminPinInput').value;
             if (pin === ADMIN_PIN) {
-                isAdminLoggedIn = true;
-                document.getElementById('loginBtn').classList.add('hidden');
-                document.getElementById('adminBadge').classList.remove('hidden');
-                document.getElementById('tabPenBtn').classList.remove('hidden');
+                localStorage.setItem('freshtrack_admin_auth', 'true');
                 closeAdminLoginModal();
-                showToast("Đăng nhập Admin thành công!", "success");
-                renderProducts();
+                // Refresh immediately to apply Admin UI distinction and reload state
+                window.location.reload();
             } else {
                 showToast("Mã PIN Admin không đúng!", "error");
             }
         }
 
         window.logoutAdmin = function() {
-            isAdminLoggedIn = false;
-            document.getElementById('loginBtn').classList.remove('hidden');
-            document.getElementById('adminBadge').classList.add('hidden');
-            document.getElementById('tabPenBtn').classList.add('hidden');
-            switchAdminTab('inventory');
-            showToast("Đã thoát quyền Admin", "info");
-            renderProducts();
+            localStorage.removeItem('freshtrack_admin_auth');
+            // Refresh immediately to reset to standard user view
+            window.location.reload();
+        }
+
+        // Apply Admin UI distinction on load
+        function applyAdminUIDistinction() {
+            const banner = document.getElementById('adminModeBanner');
+            const tabPen = document.getElementById('tabPenBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const adminBadge = document.getElementById('adminBadge');
+
+            if (isAdminLoggedIn) {
+                if (banner) banner.classList.remove('hidden');
+                if (tabPen) tabPen.classList.remove('hidden');
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (adminBadge) adminBadge.classList.remove('hidden');
+            } else {
+                if (banner) banner.classList.add('hidden');
+                if (tabPen) tabPen.classList.add('hidden');
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (adminBadge) adminBadge.classList.add('hidden');
+            }
+        }
+
+        // Realtime Live Clock (updates every second & re-renders remaining time dynamically)
+        function initLiveClock() {
+            setInterval(() => {
+                const now = new Date();
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const year = now.getFullYear();
+
+                const clockEl = document.getElementById('liveClockDisplay');
+                if (clockEl) {
+                    clockEl.innerText = `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
+                }
+            }, 1000);
         }
 
         // Dark Mode Logic
@@ -691,6 +758,8 @@
 
         window.onload = function() {
             initDarkMode();
+            initLiveClock();
+            applyAdminUIDistinction();
             lucide.createIcons();
             initNotificationsState();
             initFirebase();
@@ -743,7 +812,7 @@
             }
         }
 
-        // Status & Time Calculations
+        // Status & Live Time Calculations (based on live Date.now())
         function getProductStatus(prod) {
             const now = new Date();
             const expiryDate = new Date(prod.expiry);
@@ -1108,6 +1177,9 @@
             const expiry = document.getElementById('prodExpiry').value;
             const notes = document.getElementById('prodNotes').value.trim();
 
+            // Bảo mật kiểm tra: Nếu người dùng cố tình gửi dữ liệu với status 'approved' khi chưa xác thực Admin
+            const targetStatus = (isAdminLoggedIn && !isPropose) ? 'approved' : 'pending';
+
             if (new Date(bestBefore) > new Date(expiry)) {
                 showToast("Hạn ngon nhất không vượt quá hạn an toàn!", "error");
                 return;
@@ -1128,7 +1200,7 @@
                     bestBefore,
                     expiry,
                     notes,
-                    status: (isAdminLoggedIn && !isPropose) ? 'approved' : 'pending',
+                    status: targetStatus,
                     updatedAt: new Date().toISOString()
                 });
 
