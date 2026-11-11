@@ -394,12 +394,13 @@
             </div>
             <div class="text-center">
                 <h3 class="font-bold text-slate-900 dark:text-white text-lg">Đăng Nhập Quản Trị Viên</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Nhập mã PIN Admin để chỉnh sửa dữ liệu & kiểm duyệt đăng ký.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Đăng nhập bằng tài khoản Admin để chỉnh sửa dữ liệu & kiểm duyệt đăng ký.</p>
             </div>
-            <input type="password" id="adminPinInput" placeholder="Nhập mã PIN Admin..." class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="email" id="adminEmailInput" autocomplete="username" placeholder="Email Admin" onkeydown="if(event.key==='Enter')document.getElementById('adminPasswordInput').focus()" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <input type="password" id="adminPasswordInput" autocomplete="current-password" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter')submitAdminLogin()" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
             <div class="flex gap-2 pt-2">
                 <button onclick="closeAdminLoginModal()" class="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700">Hủy</button>
-                <button onclick="submitAdminLogin()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow">Xác nhận</button>
+                <button id="adminLoginSubmitBtn" onclick="submitAdminLogin()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow disabled:opacity-60">Đăng nhập</button>
             </div>
         </div>
     </div>
@@ -598,6 +599,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // Cấu hình Firebase dự án fresh-track-dt
         const firebaseConfig = {
@@ -610,8 +612,16 @@
             measurementId: "G-MMQRLYB84B"
         };
 
-        const ADMIN_PIN = "1352010";
-        let isAdminLoggedIn = localStorage.getItem('freshtrack_admin_auth') === 'true';
+        // Quyền admin được xác định bằng Firebase Authentication + collection "admins" (không còn mã PIN trong source)
+        let isAdminLoggedIn = false;
+        let currentAdminEmail = '';
+        let auth = null;
+        let unsubscribeProducts = null;
+
+        // Chống chèn mã HTML/JS độc hại từ dữ liệu khách nhập (XSS)
+        function esc(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
 
         let db = null;
         let products = [];
@@ -628,9 +638,11 @@
             try {
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
+                auth = getAuth(app);
 
                 updateSyncBadge('online', '🟢 Đã kết nối Cloud');
-                setupRealtimeProductsListener();
+                // Lắng nghe trạng thái đăng nhập; dữ liệu sản phẩm được tải sau khi biết người dùng là ai
+                onAuthStateChanged(auth, handleAuthStateChanged);
             } catch (err) {
                 console.error("Firebase Connection Error:", err);
                 updateSyncBadge('offline', '🔴 Lỗi kết nối Cloud');
@@ -645,11 +657,42 @@
         }
 
         // Realtime listener tuned to user/admin specs
+        async function handleAuthStateChanged(user) {
+            isAdminLoggedIn = false;
+            currentAdminEmail = '';
+
+            if (user) {
+                try {
+                    const adminSnap = await getDoc(doc(db, 'admins', user.uid));
+                    isAdminLoggedIn = adminSnap.exists();
+                } catch (err) {
+                    console.error("Admin check error:", err);
+                }
+                if (!isAdminLoggedIn) {
+                    showToast("Tài khoản này không có quyền quản trị!", "error");
+                    await signOut(auth);   // sẽ gọi lại hàm này với user = null
+                    return;
+                }
+                currentAdminEmail = user.email || '';
+            }
+
+            applyAdminUIDistinction();
+            switchAdminTab('inventory');
+            setupRealtimeProductsListener();
+        }
+
         function setupRealtimeProductsListener() {
             if (!db) return;
+            if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
+            products = [];
+
+            // Admin đọc toàn bộ; khách chỉ đọc sản phẩm đã duyệt (khớp với Firestore Rules)
             const productsRef = collection(db, 'products');
-            
-            onSnapshot(productsRef, (snapshot) => {
+            const productsQuery = isAdminLoggedIn
+                ? productsRef
+                : query(productsRef, where('status', '==', 'approved'));
+
+            unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
                 products = [];
                 snapshot.forEach((docSnap) => {
                     products.push({ id: docSnap.id, ...docSnap.data() });
@@ -680,28 +723,57 @@
 
         // Admin Auth Modal Logic with Instant Refresh
         window.openAdminLoginModal = function() {
-            document.getElementById('adminPinInput').value = '';
+            document.getElementById('adminEmailInput').value = '';
+            document.getElementById('adminPasswordInput').value = '';
             document.getElementById('adminLoginModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('adminEmailInput').focus(), 50);
         }
 
         window.closeAdminLoginModal = function() {
             document.getElementById('adminLoginModal').classList.add('hidden');
         }
 
-        window.submitAdminLogin = function() {
-            const pin = document.getElementById('adminPinInput').value;
-            if (pin === ADMIN_PIN) {
-                localStorage.setItem('freshtrack_admin_auth', 'true');
+        window.submitAdminLogin = async function() {
+            const email = document.getElementById('adminEmailInput').value.trim();
+            const password = document.getElementById('adminPasswordInput').value;
+            if (!email || !password) {
+                showToast("Vui lòng nhập email và mật khẩu", "error");
+                return;
+            }
+            if (!auth) {
+                showToast("Chưa kết nối Firebase", "error");
+                return;
+            }
+
+            const btn = document.getElementById('adminLoginSubmitBtn');
+            btn.disabled = true;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
                 closeAdminLoginModal();
-                window.location.reload();
-            } else {
-                showToast("Mã PIN Admin không đúng!", "error");
+                // Giao diện admin sẽ tự bật trong handleAuthStateChanged
+            } catch (err) {
+                const messages = {
+                    'auth/invalid-credential': 'Sai email hoặc mật khẩu',
+                    'auth/wrong-password': 'Sai email hoặc mật khẩu',
+                    'auth/user-not-found': 'Sai email hoặc mật khẩu',
+                    'auth/invalid-email': 'Email không hợp lệ',
+                    'auth/too-many-requests': 'Thử sai quá nhiều lần, vui lòng đợi vài phút rồi thử lại',
+                    'auth/network-request-failed': 'Lỗi mạng, vui lòng kiểm tra kết nối',
+                    'auth/operation-not-allowed': 'Chưa bật Email/Password trong Firebase Authentication'
+                };
+                showToast(messages[err.code] || ("Lỗi đăng nhập: " + err.message), "error");
+            } finally {
+                btn.disabled = false;
             }
         }
 
-        window.logoutAdmin = function() {
-            localStorage.removeItem('freshtrack_admin_auth');
-            window.location.reload();
+        window.logoutAdmin = async function() {
+            try {
+                await signOut(auth);
+                showToast("Đã đăng xuất quản trị viên", "info");
+            } catch (err) {
+                showToast("Lỗi đăng xuất: " + err.message, "error");
+            }
         }
 
         function applyAdminUIDistinction() {
@@ -717,6 +789,8 @@
                 if (loginBtn) loginBtn.classList.add('hidden');
                 if (adminBadge) adminBadge.classList.remove('hidden');
                 if (addNewBtnText) addNewBtnText.innerText = "Tích hợp mã QR (Admin)";
+                const badgeLabel = adminBadge ? adminBadge.querySelector('span') : null;
+                if (badgeLabel) badgeLabel.innerText = "👑 " + (currentAdminEmail || "Quyền Admin");
             } else {
                 if (banner) banner.classList.add('hidden');
                 if (tabPen) tabPen.classList.add('hidden');
@@ -885,7 +959,9 @@
             document.getElementById('publicCustomerView').classList.add('hidden');
             document.getElementById('adminView').classList.remove('hidden');
             try {
-                window.history.pushState({}, document.title, window.location.pathname);
+                if (window.location.search) {
+                    window.history.pushState({}, document.title, window.location.pathname);
+                }
             } catch (err) {
                 console.warn("Push state warning:", err);
             }
@@ -1076,20 +1152,20 @@
                     <div class="p-5 flex-1">
                         <div class="flex items-start justify-between gap-2 mb-2">
                             <span class="text-[11px] font-semibold uppercase px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-                                ${p.category}
+                                ${esc(p.category)}
                             </span>
                             <span class="text-xs font-semibold px-2.5 py-1 rounded-full border ${status.badgeBg}">
                                 ${status.label}
                             </span>
                         </div>
 
-                        <h3 class="font-bold text-slate-900 dark:text-white text-base leading-snug cursor-pointer hover:text-emerald-600 transition-colors" onclick="showPublicCustomerView('${p.id}')">
-                            ${p.name}
+                        <h3 class="font-bold text-slate-900 dark:text-white text-base leading-snug cursor-pointer hover:text-emerald-600 transition-colors" onclick="showPublicCustomerView('${esc(p.id)}')">
+                            ${esc(p.name)}
                         </h3>
 
                         <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                            <span class="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">ID: ${p.id}</span>
-                            ${p.barcode ? `<span>Barcode: ${p.barcode}</span>` : ''}
+                            <span class="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300">ID: ${esc(p.id)}</span>
+                            ${p.barcode ? `<span>Barcode: ${esc(p.barcode)}</span>` : ''}
                         </div>
 
                         <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2 text-xs">
@@ -1110,19 +1186,19 @@
                     </div>
 
                     <div class="px-5 py-3 bg-slate-50 dark:bg-slate-700/50 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs">
-                        <button onclick="openQrModal('${p.id}')" class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100/70 dark:bg-emerald-950/60 hover:bg-emerald-200 px-3 py-1.5 rounded-xl transition-colors">
+                        <button onclick="openQrModal('${esc(p.id)}')" class="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-100/70 dark:bg-emerald-950/60 hover:bg-emerald-200 px-3 py-1.5 rounded-xl transition-colors">
                             <i data-lucide="qr-code" class="w-4 h-4"></i> Mã QR Cloud
                         </button>
 
                         <div class="flex gap-1">
-                            <button onclick="showPublicCustomerView('${p.id}')" title="Xem công khai" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                            <button onclick="showPublicCustomerView('${esc(p.id)}')" title="Xem công khai" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
                             ${isAdminLoggedIn ? `
-                            <button onclick="editProduct('${p.id}')" title="Chỉnh sửa" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                            <button onclick="editProduct('${esc(p.id)}')" title="Chỉnh sửa" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
                                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                             </button>
-                            <button onclick="confirmDeleteProduct('${p.id}')" title="Xóa" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
+                            <button onclick="confirmDeleteProduct('${esc(p.id)}')" title="Xóa" class="p-1.5 text-slate-600 dark:text-slate-300 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-600 rounded-lg transition-colors">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                             ` : ''}
@@ -1141,16 +1217,16 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">Chờ duyệt</span>
-                                <h4 class="font-bold text-slate-900 dark:text-white mt-1">${p.name}</h4>
+                                <h4 class="font-bold text-slate-900 dark:text-white mt-1">${esc(p.name)}</h4>
                             </div>
-                            <span class="text-xs text-slate-400 font-mono">${p.category}</span>
+                            <span class="text-xs text-slate-400 font-mono">${esc(p.category)}</span>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">ID: <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded">${p.id}</code></p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">ID: <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded">${esc(p.id)}</code></p>
                         <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
-                            <button onclick="inspectPendingProduct('${p.id}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg hover:bg-slate-200">
+                            <button onclick="inspectPendingProduct('${esc(p.id)}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg hover:bg-slate-200">
                                 🔍 Xem chi tiết
                             </button>
-                            <button onclick="approveProduct('${p.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all">
+                            <button onclick="approveProduct('${esc(p.id)}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all">
                                 ✓ Phê Duyệt
                             </button>
                         </div>
@@ -1177,11 +1253,11 @@
 
             contentEl.innerHTML = `
                 <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-600">
-                    <div><span class="text-slate-400">Tên sản phẩm:</span><p class="font-bold text-slate-800 dark:text-slate-100">${prod.name}</p></div>
-                    <div><span class="text-slate-400">Mã ID 6 chữ số:</span><p class="font-mono font-bold text-slate-800 dark:text-slate-100">${prod.id}</p></div>
-                    <div><span class="text-slate-400">Loại thực phẩm:</span><p class="font-medium text-slate-800 dark:text-slate-200">${prod.category}</p></div>
-                    <div><span class="text-slate-400">Số lô sản xuất:</span><p class="font-medium text-slate-800 dark:text-slate-200">${prod.lot || 'Không có'}</p></div>
-                    <div><span class="text-slate-400">Mã vạch (Barcode):</span><p class="font-mono font-medium text-slate-800 dark:text-slate-200">${prod.barcode || 'N/A'}</p></div>
+                    <div><span class="text-slate-400">Tên sản phẩm:</span><p class="font-bold text-slate-800 dark:text-slate-100">${esc(prod.name)}</p></div>
+                    <div><span class="text-slate-400">Mã ID 6 chữ số:</span><p class="font-mono font-bold text-slate-800 dark:text-slate-100">${esc(prod.id)}</p></div>
+                    <div><span class="text-slate-400">Loại thực phẩm:</span><p class="font-medium text-slate-800 dark:text-slate-200">${esc(prod.category)}</p></div>
+                    <div><span class="text-slate-400">Số lô sản xuất:</span><p class="font-medium text-slate-800 dark:text-slate-200">${esc(prod.lot || 'Không có')}</p></div>
+                    <div><span class="text-slate-400">Mã vạch (Barcode):</span><p class="font-mono font-medium text-slate-800 dark:text-slate-200">${esc(prod.barcode || 'N/A')}</p></div>
                     <div><span class="text-slate-400">Thời gian sản xuất:</span><p class="font-medium text-slate-800 dark:text-slate-200">${formatDate(prod.mfgDate)}</p></div>
                 </div>
 
@@ -1198,13 +1274,13 @@
 
                 <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200/60 dark:border-slate-600">
                     <span class="text-slate-400">Hướng dẫn bảo quản:</span>
-                    <p class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">${prod.notes || 'Bảo quản thông thường'}</p>
+                    <p class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">${esc(prod.notes || 'Bảo quản thông thường')}</p>
                 </div>
             `;
 
             actionEl.innerHTML = `
-                <button onclick="confirmDeleteProduct('${prod.id}'); closePendingDetailModal();" class="px-4 py-2 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold rounded-xl text-xs">Từ chối</button>
-                <button onclick="approveProduct('${prod.id}'); closePendingDetailModal();" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs">✓ Phê Duyệt Ngay</button>
+                <button onclick="confirmDeleteProduct('${esc(prod.id)}'); closePendingDetailModal();" class="px-4 py-2 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold rounded-xl text-xs">Từ chối</button>
+                <button onclick="approveProduct('${esc(prod.id)}'); closePendingDetailModal();" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs">✓ Phê Duyệt Ngay</button>
             `;
 
             document.getElementById('pendingDetailModal').classList.remove('hidden');
@@ -1314,14 +1390,15 @@
             try {
                 const docRef = doc(db, 'products', customId);
                 const isEditing = !!hiddenId;
-                if (!isEditing) {
+                // Chỉ admin được đọc để kiểm tra trùng; khách sẽ bị Rules từ chối nếu mã đã tồn tại
+                if (isAdminLoggedIn && !isEditing) {
                     const existing = await getDoc(docRef);
                     if (existing.exists()) {
                         showToast(`Mã "${customId}" đã tồn tại, hãy bấm "Tạo 6 chữ số" để lấy mã khác!`, "error");
                         return;
                     }
                 }
-                await setDoc(docRef, {
+                const payload = {
                     name,
                     barcode,
                     category,
@@ -1332,16 +1409,24 @@
                     notes,
                     status: targetStatus,
                     updatedAt: new Date().toISOString()
-                }, { merge: true });
+                };
+                if (isAdminLoggedIn) {
+                    await setDoc(docRef, payload, { merge: true });
+                } else {
+                    await setDoc(docRef, payload);   // khách chỉ được TẠO MỚI bản ghi "pending"
+                }
 
                 saveScannedIdToDevice(customId);
                 showToast(isPropose ? "Đã gửi đăng ký! Sản phẩm sẽ hiển thị sau khi Admin duyệt." : "Đã lưu thành công lên Firebase!", "success");
                 closeAddModal();
             } catch (err) {
                 console.error("Save error:", err);
-                const hint = (err && err.code === 'permission-denied')
-                    ? "Firestore từ chối ghi dữ liệu (kiểm tra Rules trong Firebase Console)"
-                    : err.message;
+                let hint = err.message;
+                if (err && err.code === 'permission-denied') {
+                    hint = isAdminLoggedIn
+                        ? "Firestore từ chối ghi dữ liệu (kiểm tra Rules và collection admins)"
+                        : "Mã này có thể đã tồn tại hoặc dữ liệu không hợp lệ. Hãy bấm \"Tạo 6 chữ số\" để lấy mã mới";
+                }
                 showToast("Lỗi lưu Firestore: " + hint, "error");
             } finally {
                 saveBtn.disabled = false;
