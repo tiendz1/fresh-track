@@ -1263,7 +1263,16 @@
             }
 
             const isPropose = document.getElementById('isProposeForm').value === "true";
-            const customId = document.getElementById('prodCustomId').value.trim();
+            // Get ID reliably even if input field is disabled during edit mode
+            const hiddenId = document.getElementById('prodId').value.trim();
+            const inputId = document.getElementById('prodCustomId').value.trim();
+            const customId = inputId || hiddenId;
+
+            if (!customId) {
+                showToast("Vui lòng nhập hoặc tạo Mã Định Danh QR!", "error");
+                return;
+            }
+
             const name = document.getElementById('prodName').value.trim();
             const barcode = document.getElementById('prodBarcode').value.trim();
             const category = document.getElementById('prodCategory').value;
@@ -1297,10 +1306,10 @@
                     notes,
                     status: targetStatus,
                     updatedAt: new Date().toISOString()
-                });
+                }, { merge: true });
 
                 saveScannedIdToDevice(customId);
-                showToast(isPropose ? "Đã gửi đăng ký! Sản phẩm sẽ hiển thị sau khi Admin duyệt." : "Đã lưu thành công!", "success");
+                showToast(isPropose ? "Đã gửi đăng ký! Sản phẩm sẽ hiển thị sau khi Admin duyệt." : "Đã lưu thành công lên Firebase!", "success");
                 closeAddModal();
             } catch (err) {
                 console.error("Save error:", err);
