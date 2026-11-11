@@ -69,7 +69,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 dark:text-white leading-tight">FreshTrack</h1>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hệ thống Đám mây Đồng bộ Thời gian thực</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hệ thống Tra cứu Chất lượng Sản phẩm</p>
                     </div>
                 </a>
                 
@@ -225,9 +225,9 @@
             <div class="bg-emerald-700 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
                 <div class="space-y-1.5 text-center md:text-left">
                     <span class="inline-block px-3 py-0.5 rounded-full bg-white/20 text-xs font-bold tracking-wide uppercase">Tra cứu Realtime</span>
-                    <h2 class="text-2xl font-bold tracking-tight">Hệ thống Tra cứu & Đề xuất Thực phẩm</h2>
+                    <h2 class="text-2xl font-bold tracking-tight">Hệ thống Tra cứu Chất lượng Sản phẩm</h2>
                     <p class="text-xs sm:text-sm text-emerald-100 max-w-xl">
-                        Quét mã QR bằng Camera hoặc nhập mã sản phẩm bên dưới. Bạn cũng có thể gửi đề xuất thực phẩm mới để Admin kiểm duyệt!
+                        Quét mã QR bằng Camera hoặc nhập mã sản phẩm bên dưới. Bạn cũng có thể đăng ký sản phẩm mới vào hệ thống!
                     </p>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2.5 w-full md:w-auto shrink-0">
@@ -235,7 +235,7 @@
                         📷 Quét Mã QR Camera
                     </button>
                     <button onclick="openUserProposeModal()" class="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white border border-emerald-400/40 rounded-xl font-semibold text-xs sm:text-sm transition active:scale-95">
-                        ✍️ Đề xuất món mới
+                        ✍️ Đăng ký sản phẩm mới
                     </button>
                 </div>
             </div>
@@ -248,11 +248,11 @@
                     </div>
                     <div class="flex-1">
                         <h3 class="font-bold text-sm tracking-wide flex items-center gap-2">
-                            <span>THÔNG BÁO CHẤT LƯỢNG HÀNG NGÀY (FIREBASE SYNC)</span>
+                            <span>THÔNG BÁO CHẤT LƯỢNG HÀNG NGÀY</span>
                             <span class="text-xs font-normal px-2 py-0.5 bg-white/20 rounded-full" id="todayDateStr">Hôm nay</span>
                         </h3>
                         <p id="dailyDigestContent" class="text-xs sm:text-sm text-emerald-50 mt-1 leading-relaxed">
-                            Đang phân tích dữ liệu kho thực phẩm từ Firebase...
+                            Đang kiểm tra chất lượng thực phẩm...
                         </p>
                     </div>
                     <button onclick="closeDailyBanner()" class="text-white/80 hover:text-white p-1">
@@ -261,11 +261,11 @@
                 </div>
             </div>
 
-            <!-- Navigation Tabs for Admin (Shows Admin controls or Pending queue) -->
+            <!-- Navigation Tabs for Admin -->
             <div id="adminTabHeader" class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3">
                 <div class="flex items-center gap-2">
                     <button onclick="switchAdminTab('inventory')" id="tabInvBtn" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 text-white">
-                        Danh sách Thực phẩm
+                        Sản phẩm đã quét / Quản lý
                     </button>
                     <button id="tabPenBtn" onclick="switchAdminTab('pending')" class="hidden px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 relative">
                         Chờ kiểm duyệt
@@ -281,7 +281,7 @@
                         <i data-lucide="boxes" class="w-6 h-6"></i>
                     </div>
                     <div>
-                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Tổng mã thực phẩm</p>
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Tổng sản phẩm đã lưu</p>
                         <h4 class="text-xl font-bold text-slate-900 dark:text-white" id="statTotal">0</h4>
                     </div>
                 </div>
@@ -351,53 +351,36 @@
                 <!-- Add New Product Button -->
                 <button id="addNewBtn" onclick="openAddModal()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all active:scale-95 shrink-0">
                     <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span>Tích hợp mã QR lên Cloud</span>
+                    <span id="addNewBtnText">Đăng ký mã QR sản phẩm</span>
                 </button>
             </div>
 
             <!-- Tab 1: Product Grid -->
             <div id="tabInventory" class="space-y-4">
-                <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    <!-- Skeleton Loading State -->
-                    <div id="skeletonLoader" class="contents">
-                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 animate-pulse">
-                            <div class="flex justify-between items-center"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div></div>
-                            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
-                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 animate-pulse hidden md:block">
-                            <div class="flex justify-between items-center"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div></div>
-                            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
-                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
-                        </div>
-                        <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 animate-pulse hidden lg:block">
-                            <div class="flex justify-between items-center"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/4"></div><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/3"></div></div>
-                            <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
-                            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
-                            <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div><div class="h-3 bg-slate-200 dark:bg-slate-700 rounded"></div></div>
-                        </div>
-                    </div>
+                <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="loadMoreContainer" class="hidden text-center pt-4">
+                    <button onclick="loadMoreProducts()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 rounded-xl transition-all">
+                        Tải thêm sản phẩm...
+                    </button>
                 </div>
             </div>
 
             <!-- Tab 2: Pending Approval Grid (Admin Mode) -->
             <div id="tabPending" class="hidden space-y-4">
-                <p class="text-xs text-slate-500 dark:text-slate-400">Danh sách các món ăn do người dùng gửi đề xuất. Bấm Phê Duyệt để đưa vào database chính.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Danh sách đăng ký sản phẩm cần được kiểm duyệt từ Quản trị viên.</p>
                 <div id="pendingProductList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             </div>
 
             <!-- Empty State -->
             <div id="emptyState" class="hidden text-center py-16 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700">
                 <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
-                    <i data-lucide="cloud-off" class="w-8 h-8"></i>
+                    <i data-lucide="qr-code" class="w-8 h-8"></i>
                 </div>
-                <h3 class="font-bold text-slate-700 dark:text-slate-200 text-base">Chưa có sản phẩm nào trên Firebase</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Hãy bấm vào nút bên dưới để thêm sản phẩm đầu tiên lên đám mây.</p>
-                <button onclick="openAddModal()" class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Tích hợp sản phẩm mới
+                <h3 class="font-bold text-slate-700 dark:text-slate-200 text-base" id="emptyStateTitle">Chưa có sản phẩm nào được lưu trên thiết bị này</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="emptyStateSub">Hãy quét mã QR hoặc đăng ký sản phẩm mới để bắt đầu theo dõi.</p>
+                <button onclick="openScannerModal()" class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    Quét mã QR ngay
                 </button>
             </div>
         </div>
@@ -411,7 +394,7 @@
             </div>
             <div class="text-center">
                 <h3 class="font-bold text-slate-900 dark:text-white text-lg">Đăng Nhập Quản Trị Viên</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Nhập mã PIN Admin để chỉnh sửa dữ liệu & kiểm duyệt đề xuất.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Nhập mã PIN Admin để chỉnh sửa dữ liệu & kiểm duyệt đăng ký.</p>
             </div>
             <input type="password" id="adminPinInput" placeholder="Nhập mã PIN Admin..." class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-900 dark:text-white text-center text-lg font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-emerald-500">
             <div class="flex gap-2 pt-2">
@@ -444,10 +427,10 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Mã Định Danh QR (Product ID) *</label>
                     <div class="flex gap-2">
-                        <input type="text" id="prodCustomId" required placeholder="Ví dụ: milk-vinamilk-01" class="flex-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono">
-                        <button type="button" onclick="generateRandomId()" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Tạo ngẫu nhiên</button>
+                        <input type="text" id="prodCustomId" required placeholder="Ví dụ: sp-012345" class="flex-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono">
+                        <button type="button" onclick="generateRandomId()" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">Tạo 6 chữ số</button>
                     </div>
-                    <p class="text-[11px] text-slate-400 mt-1">Mã này tạo link QR: `?id=MÃ_NÀY` (Đồng bộ Firebase)</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Hệ thống mã 6 chữ số hỗ trợ lưu trữ số lượng rất lớn sản phẩm.</p>
                 </div>
 
                 <!-- Product Name -->
@@ -527,7 +510,7 @@
             </div>
             
             <h3 class="font-bold text-slate-900 dark:text-white text-lg" id="qrModalTitle">Mã QR Sản Phẩm Cloud</h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Quét bằng camera bất kỳ điện thoại nào trên thế giới để xem hạn dùng trực tiếp từ Cloud.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Quét bằng camera để xem thông tin chi tiết của sản phẩm.</p>
 
             <!-- Render QR Code Image -->
             <div class="my-6 p-4 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl flex flex-col items-center justify-center">
@@ -540,9 +523,27 @@
                     <i data-lucide="copy" class="w-4 h-4"></i> Sao chép URL
                 </button>
                 <button onclick="openTestUrl()" class="px-3 py-2 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors">
-                    <i data-lucide="external-link" class="w-4 h-4"></i> Thử mở Link
+                    <i data-lucide="external-link" class="w-4 h-4"></i> Mở liên kết
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: DETAILED VIEW FOR ADMIN PENDING APPROVAL -->
+    <div id="pendingDetailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
+                    <i data-lucide="file-search" class="w-5 h-5 text-amber-500"></i> Chi tiết Đăng ký Kiểm duyệt
+                </h3>
+                <button onclick="closePendingDetailModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="pendingDetailContent" class="space-y-3 text-xs sm:text-sm"></div>
+
+            <div class="flex gap-2 pt-4 border-t border-slate-100 dark:border-slate-700" id="pendingDetailActionBtns"></div>
         </div>
     </div>
 
@@ -596,7 +597,7 @@
     <!-- FIREBASE INTEGRATION SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // Cấu hình Firebase dự án fresh-track-dt
         const firebaseConfig = {
@@ -614,9 +615,13 @@
 
         let db = null;
         let products = [];
+        let deviceScannedIds = JSON.parse(localStorage.getItem('freshtrack_scanned_ids') || '[]');
         let activeQrUrl = "";
         let html5QrcodeScanner = null;
         let notificationsEnabled = false;
+
+        // Lazy loading pagination control
+        let currentDisplayLimit = 12;
 
         // Khởi tạo Firebase Firestore
         function initFirebase() {
@@ -624,7 +629,7 @@
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
 
-                updateSyncBadge('online', '🟢 Đã kết nối Cloud (Realtime DB)');
+                updateSyncBadge('online', '🟢 Đã kết nối Cloud');
                 setupRealtimeProductsListener();
             } catch (err) {
                 console.error("Firebase Connection Error:", err);
@@ -632,7 +637,14 @@
             }
         }
 
-        // Lắng nghe dữ liệu thời gian thực từ bộ sưu tập 'products'
+        function saveScannedIdToDevice(id) {
+            if (!deviceScannedIds.includes(id)) {
+                deviceScannedIds.push(id);
+                localStorage.setItem('freshtrack_scanned_ids', JSON.stringify(deviceScannedIds));
+            }
+        }
+
+        // Realtime listener tuned to user/admin specs
         function setupRealtimeProductsListener() {
             if (!db) return;
             const productsRef = collection(db, 'products');
@@ -681,7 +693,6 @@
             if (pin === ADMIN_PIN) {
                 localStorage.setItem('freshtrack_admin_auth', 'true');
                 closeAdminLoginModal();
-                // Refresh immediately to apply Admin UI distinction and reload state
                 window.location.reload();
             } else {
                 showToast("Mã PIN Admin không đúng!", "error");
@@ -690,31 +701,31 @@
 
         window.logoutAdmin = function() {
             localStorage.removeItem('freshtrack_admin_auth');
-            // Refresh immediately to reset to standard user view
             window.location.reload();
         }
 
-        // Apply Admin UI distinction on load
         function applyAdminUIDistinction() {
             const banner = document.getElementById('adminModeBanner');
             const tabPen = document.getElementById('tabPenBtn');
             const loginBtn = document.getElementById('loginBtn');
             const adminBadge = document.getElementById('adminBadge');
+            const addNewBtnText = document.getElementById('addNewBtnText');
 
             if (isAdminLoggedIn) {
                 if (banner) banner.classList.remove('hidden');
                 if (tabPen) tabPen.classList.remove('hidden');
                 if (loginBtn) loginBtn.classList.add('hidden');
                 if (adminBadge) adminBadge.classList.remove('hidden');
+                if (addNewBtnText) addNewBtnText.innerText = "Tích hợp mã QR (Admin)";
             } else {
                 if (banner) banner.classList.add('hidden');
                 if (tabPen) tabPen.classList.add('hidden');
                 if (loginBtn) loginBtn.classList.remove('hidden');
                 if (adminBadge) adminBadge.classList.add('hidden');
+                if (addNewBtnText) addNewBtnText.innerText = "Đăng ký sản phẩm mới";
             }
         }
 
-        // Realtime Live Clock (updates every second & re-renders remaining time dynamically)
         function initLiveClock() {
             setInterval(() => {
                 const now = new Date();
@@ -732,7 +743,6 @@
             }, 1000);
         }
 
-        // Dark Mode Logic
         window.toggleDarkMode = function() {
             const isDark = document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -770,6 +780,7 @@
             const targetId = urlParams.get('id') || urlParams.get('code');
 
             if (targetId) {
+                saveScannedIdToDevice(targetId);
                 showPublicCustomerView(targetId);
             } else {
                 switchToAdminView();
@@ -777,7 +788,6 @@
             checkDailyDigest();
         }
 
-        // Notification Controls
         function initNotificationsState() {
             notificationsEnabled = localStorage.getItem('freshtrack_notif') === 'true';
             updateNotifUI();
@@ -792,7 +802,7 @@
                 Notification.requestPermission();
             }
             
-            showToast(notificationsEnabled ? "Đã bật nhắc nhở chất lượng thực phẩm!" : "Đã tắt nhắc nhở", "success");
+            showToast(notificationsEnabled ? "Đã bật nhắc nhở chất lượng!" : "Đã tắt nhắc nhở", "success");
         }
 
         function updateNotifUI() {
@@ -812,7 +822,6 @@
             }
         }
 
-        // Status & Live Time Calculations (based on live Date.now())
         function getProductStatus(prod) {
             const now = new Date();
             const expiryDate = new Date(prod.expiry);
@@ -872,7 +881,6 @@
             return `${baseUrl}?id=${encodeURIComponent(prodId)}`;
         }
 
-        // VIEW NAVIGATION
         window.switchToAdminView = function() {
             document.getElementById('publicCustomerView').classList.add('hidden');
             document.getElementById('adminView').classList.remove('hidden');
@@ -916,8 +924,20 @@
             }
         }
 
-        function showPublicCustomerView(prodId) {
-            const prod = products.find(p => (p.id === prodId || p.barcode === prodId) && p.status !== 'pending');
+        async function showPublicCustomerView(prodId) {
+            let prod = products.find(p => (p.id === prodId || p.barcode === prodId) && p.status !== 'pending');
+            
+            // If not found in current memory list, query directly from Firestore Cloud
+            if (!prod && db) {
+                try {
+                    const docRef = doc(db, 'products', prodId);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().status !== 'pending') {
+                        prod = { id: docSnap.id, ...docSnap.data() };
+                    }
+                } catch(e) { console.error("Cloud fetch error:", e); }
+            }
+
             const publicView = document.getElementById('publicCustomerView');
             const adminView = document.getElementById('adminView');
 
@@ -925,6 +945,8 @@
                 showToast(`Không tìm thấy hoặc sản phẩm mã "${prodId}" đang chờ kiểm duyệt`, "info");
                 return;
             }
+
+            saveScannedIdToDevice(prod.id);
 
             adminView.classList.add('hidden');
             publicView.classList.remove('hidden');
@@ -965,11 +987,12 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // RENDER PRODUCTS GRID
+        // RENDER PRODUCTS GRID (Optimized for Device storage & Admin pagination)
         window.renderProducts = function() {
             const container = document.getElementById('productList');
             const pendingContainer = document.getElementById('pendingProductList');
             const emptyState = document.getElementById('emptyState');
+            const loadMoreBtn = document.getElementById('loadMoreContainer');
             const search = document.getElementById('searchInput').value.toLowerCase().trim();
             const catFilter = document.getElementById('categoryFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
@@ -980,9 +1003,18 @@
             const approvedProducts = products.filter(p => p.status !== 'pending');
             const pendingProducts = products.filter(p => p.status === 'pending');
 
-            let counts = { total: approvedProducts.length, fresh: 0, eatSoon: 0, expired: 0 };
+            // Device vs Admin rendering filter logic
+            let displayableProducts = [];
+            if (isAdminLoggedIn) {
+                displayableProducts = approvedProducts;
+            } else {
+                // Device level filtering: show products scanned or registered by this device
+                displayableProducts = approvedProducts.filter(p => deviceScannedIds.includes(p.id));
+            }
 
-            approvedProducts.forEach(p => {
+            let counts = { total: displayableProducts.length, fresh: 0, eatSoon: 0, expired: 0 };
+
+            displayableProducts.forEach(p => {
                 const st = getProductStatus(p);
                 if (st.code === 'FRESH') counts.fresh++;
                 if (st.code === 'EAT_SOON') counts.eatSoon++;
@@ -994,7 +1026,7 @@
             document.getElementById('statEatSoon').innerText = counts.eatSoon;
             document.getElementById('statExpired').innerText = counts.expired;
 
-            const filtered = approvedProducts.filter(p => {
+            const filtered = displayableProducts.filter(p => {
                 const st = getProductStatus(p);
                 const matchesSearch = p.name.toLowerCase().includes(search) || 
                                       p.id.toLowerCase().includes(search) || 
@@ -1007,12 +1039,24 @@
 
             if (filtered.length === 0) {
                 emptyState.classList.remove('hidden');
+                if (!isAdminLoggedIn) {
+                    document.getElementById('emptyStateTitle').innerText = "Chưa có sản phẩm nào được lưu trên thiết bị này";
+                    document.getElementById('emptyStateSub').innerText = "Hãy quét mã QR hoặc đăng ký sản phẩm mới để bắt đầu theo dõi.";
+                }
             } else {
                 emptyState.classList.add('hidden');
             }
 
-            // Render Kho hàng công khai
-            filtered.forEach(p => {
+            // Paginated slice to handle huge product volumes without freezing UI
+            const paginatedItems = filtered.slice(0, currentDisplayLimit);
+
+            if (filtered.length > currentDisplayLimit) {
+                loadMoreBtn.classList.remove('hidden');
+            } else {
+                loadMoreBtn.classList.add('hidden');
+            }
+
+            paginatedItems.forEach(p => {
                 const status = getProductStatus(p);
                 const safeTimeLeft = formatTimeDiff(p.expiry);
                 const bestTimeLeft = formatTimeDiff(p.bestBefore);
@@ -1079,7 +1123,7 @@
                 container.appendChild(card);
             });
 
-            // Render Danh sách Đề xuất Chờ kiểm duyệt
+            // Render Pending Queue for Admin with Full Details Inspection
             if (isAdminLoggedIn) {
                 pendingProducts.forEach(p => {
                     const card = document.createElement('div');
@@ -1092,13 +1136,13 @@
                             </div>
                             <span class="text-xs text-slate-400 font-mono">${p.category}</span>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Mã ID đề xuất: <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded">${p.id}</code></p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">ID: <code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded">${p.id}</code></p>
                         <div class="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                            <button onclick="inspectPendingProduct('${p.id}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg hover:bg-slate-200">
+                                🔍 Xem chi tiết
+                            </button>
                             <button onclick="approveProduct('${p.id}')" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all">
                                 ✓ Phê Duyệt
-                            </button>
-                            <button onclick="confirmDeleteProduct('${p.id}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-rose-500 hover:text-rose-700 text-xs font-bold rounded-lg">
-                                Từ chối
                             </button>
                         </div>
                     `;
@@ -1109,7 +1153,58 @@
             lucide.createIcons();
         }
 
-        // Approve Pending Product Logic
+        window.loadMoreProducts = function() {
+            currentDisplayLimit += 12;
+            renderProducts();
+        }
+
+        // INSPECT PENDING DETAILS MODAL LOGIC
+        window.inspectPendingProduct = function(id) {
+            const prod = products.find(p => p.id === id);
+            if (!prod) return;
+
+            const contentEl = document.getElementById('pendingDetailContent');
+            const actionEl = document.getElementById('pendingDetailActionBtns');
+
+            contentEl.innerHTML = `
+                <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-600">
+                    <div><span class="text-slate-400">Tên sản phẩm:</span><p class="font-bold text-slate-800 dark:text-slate-100">${prod.name}</p></div>
+                    <div><span class="text-slate-400">Mã ID 6 chữ số:</span><p class="font-mono font-bold text-slate-800 dark:text-slate-100">${prod.id}</p></div>
+                    <div><span class="text-slate-400">Loại thực phẩm:</span><p class="font-medium text-slate-800 dark:text-slate-200">${prod.category}</p></div>
+                    <div><span class="text-slate-400">Số lô sản xuất:</span><p class="font-medium text-slate-800 dark:text-slate-200">${prod.lot || 'Không có'}</p></div>
+                    <div><span class="text-slate-400">Mã vạch (Barcode):</span><p class="font-mono font-medium text-slate-800 dark:text-slate-200">${prod.barcode || 'N/A'}</p></div>
+                    <div><span class="text-slate-400">Thời gian sản xuất:</span><p class="font-medium text-slate-800 dark:text-slate-200">${formatDate(prod.mfgDate)}</p></div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl">
+                        <span class="text-amber-800 dark:text-amber-300 font-semibold">Ngon nhất trước:</span>
+                        <p class="font-bold text-amber-950 dark:text-amber-200">${formatDate(prod.bestBefore)} (${formatTimeDiff(prod.bestBefore)})</p>
+                    </div>
+                    <div class="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 rounded-xl">
+                        <span class="text-rose-800 dark:text-rose-300 font-semibold">Hạn an toàn tối đa:</span>
+                        <p class="font-bold text-rose-950 dark:text-rose-200">${formatDate(prod.expiry)} (${formatTimeDiff(prod.expiry)})</p>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200/60 dark:border-slate-600">
+                    <span class="text-slate-400">Hướng dẫn bảo quản:</span>
+                    <p class="font-medium text-slate-800 dark:text-slate-200 mt-0.5">${prod.notes || 'Bảo quản thông thường'}</p>
+                </div>
+            `;
+
+            actionEl.innerHTML = `
+                <button onclick="confirmDeleteProduct('${prod.id}'); closePendingDetailModal();" class="px-4 py-2 bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 font-bold rounded-xl text-xs">Từ chối</button>
+                <button onclick="approveProduct('${prod.id}'); closePendingDetailModal();" class="flex-1 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs">✓ Phê Duyệt Ngay</button>
+            `;
+
+            document.getElementById('pendingDetailModal').classList.remove('hidden');
+        }
+
+        window.closePendingDetailModal = function() {
+            document.getElementById('pendingDetailModal').classList.add('hidden');
+        }
+
         window.approveProduct = async function(id) {
             if (!isAdminLoggedIn) return;
             try {
@@ -1121,13 +1216,13 @@
             }
         }
 
-        // Form Open Handlers
+        // Form Open Handlers & 6-Digit Generator
         window.openAddModal = function() {
             document.getElementById('productForm').reset();
             document.getElementById('prodId').value = '';
             document.getElementById('isProposeForm').value = "false";
             document.getElementById('prodCustomId').disabled = false;
-            document.getElementById('modalTitle').innerText = isAdminLoggedIn ? 'Tích hợp Mã QR Lên Cloud (Admin)' : 'Đề xuất sản phẩm mới';
+            document.getElementById('modalTitle').innerText = isAdminLoggedIn ? 'Tích hợp Mã QR Lên Cloud (Admin)' : 'Đăng ký sản phẩm mới';
             generateRandomId();
 
             const now = new Date();
@@ -1147,16 +1242,17 @@
         window.openUserProposeModal = function() {
             openAddModal();
             document.getElementById('isProposeForm').value = "true";
-            document.getElementById('modalTitle').innerText = 'Đề xuất Thực phẩm Mới (Chờ duyệt)';
+            document.getElementById('modalTitle').innerText = 'Đăng ký Thực phẩm Mới (Chờ duyệt)';
         }
 
         window.closeAddModal = function() {
             document.getElementById('addModal').classList.add('hidden');
         }
 
+        // Upgraded Code Generation to 6 Digits (e.g., sp-012345)
         window.generateRandomId = function() {
-            const rand = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('prodCustomId').value = `sp-${rand}`;
+            const rand6Digit = String(Math.floor(Math.random() * 1000000)).padStart(6, '0');
+            document.getElementById('prodCustomId').value = `sp-${rand6Digit}`;
         }
 
         window.saveProductToCloud = async function(e) {
@@ -1177,7 +1273,6 @@
             const expiry = document.getElementById('prodExpiry').value;
             const notes = document.getElementById('prodNotes').value.trim();
 
-            // Bảo mật kiểm tra: Nếu người dùng cố tình gửi dữ liệu với status 'approved' khi chưa xác thực Admin
             const targetStatus = (isAdminLoggedIn && !isPropose) ? 'approved' : 'pending';
 
             if (new Date(bestBefore) > new Date(expiry)) {
@@ -1204,7 +1299,8 @@
                     updatedAt: new Date().toISOString()
                 });
 
-                showToast(isPropose ? "Đã gửi đề xuất! Sản phẩm sẽ được hiển thị sau khi Admin duyệt." : "Đã lưu thành công lên Firebase!", "success");
+                saveScannedIdToDevice(customId);
+                showToast(isPropose ? "Đã gửi đăng ký! Sản phẩm sẽ hiển thị sau khi Admin duyệt." : "Đã lưu thành công!", "success");
                 closeAddModal();
             } catch (err) {
                 console.error("Save error:", err);
@@ -1239,7 +1335,7 @@
         window.confirmDeleteProduct = function(id) {
             if (!isAdminLoggedIn) return;
             document.getElementById('confirmTitle').innerText = "Xác nhận xóa sản phẩm";
-            document.getElementById('confirmMessage').innerText = `Bạn có chắc chắn muốn xóa mã "${id}" khỏi Firebase?`;
+            document.getElementById('confirmMessage').innerText = `Bạn có chắc chắn muốn xóa mã "${id}" khỏi Cloud?`;
             
             const yesBtn = document.getElementById('confirmYesBtn');
             yesBtn.onclick = async function() {
@@ -1247,7 +1343,7 @@
                 try {
                     const docRef = doc(db, 'products', id);
                     await deleteDoc(docRef);
-                    showToast("Đã xóa khỏi Firebase", "info");
+                    showToast("Đã xóa khỏi Cloud", "info");
                 } catch(err) {
                     showToast("Lỗi xóa: " + err.message, "error");
                 }
@@ -1366,7 +1462,7 @@
             let expiredCount = 0;
             let eatSoonCount = 0;
 
-            const approvedProducts = products.filter(p => p.status !== 'pending');
+            const approvedProducts = products.filter(p => p.status !== 'pending' && (isAdminLoggedIn || deviceScannedIds.includes(p.id)));
 
             approvedProducts.forEach(p => {
                 const st = getProductStatus(p);
@@ -1380,10 +1476,10 @@
 
             if (expiredCount > 0 || eatSoonCount > 0) {
                 banner.classList.remove('hidden');
-                if(content) content.innerText = `Cảnh báo Firebase: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng gấp!`;
+                if(content) content.innerText = `Cảnh báo: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng gấp!`;
             } else if (approvedProducts.length > 0) {
                 banner.classList.remove('hidden');
-                if(content) content.innerText = `Firebase xác nhận tất cả ${approvedProducts.length} thực phẩm trong kho đều còn rất tươi ngon!`;
+                if(content) content.innerText = `Tất cả ${approvedProducts.length} thực phẩm đã lưu đều còn rất tươi ngon!`;
             } else {
                 banner.classList.add('hidden');
             }
