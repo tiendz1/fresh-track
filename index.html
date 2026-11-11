@@ -898,12 +898,13 @@
         }
 
         window.switchAdminTab = function(tab) {
-            if (tab === 'inventory') {
+            if (tab === 'inventory' || !isAdminLoggedIn) {
                 document.getElementById('tabInventory').classList.remove('hidden');
                 document.getElementById('tabPending').classList.add('hidden');
                 document.getElementById('tabInvBtn').className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 text-white";
-                document.getElementById('tabPenBtn').className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 relative";
+                document.getElementById('tabPenBtn').className = (isAdminLoggedIn ? "" : "hidden ") + "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 relative";
             } else {
+                if (!isAdminLoggedIn) return; // khách không được mở tab chờ duyệt
                 document.getElementById('tabInventory').classList.add('hidden');
                 document.getElementById('tabPending').classList.remove('hidden');
                 document.getElementById('tabPenBtn').className = "px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-600 text-white relative";
@@ -924,7 +925,7 @@
             }
         }
 
-        async function showPublicCustomerView(prodId) {
+        window.showPublicCustomerView = async function(prodId) {
             let prod = products.find(p => (p.id === prodId || p.barcode === prodId) && p.status !== 'pending');
             
             // If not found in current memory list, query directly from Firestore Cloud
@@ -950,6 +951,14 @@
 
             adminView.classList.add('hidden');
             publicView.classList.remove('hidden');
+
+            // Giữ ?id=... trên URL để khi Firestore cập nhật realtime không tự quay về trang quản trị
+            try {
+                const curId = new URLSearchParams(window.location.search).get('id');
+                if (curId !== prod.id) {
+                    window.history.pushState({}, document.title, `${window.location.pathname}?id=${encodeURIComponent(prod.id)}`);
+                }
+            } catch (err) { console.warn("Push state warning:", err); }
 
             const status = getProductStatus(prod);
 
@@ -1225,21 +1234,26 @@
             document.getElementById('modalTitle').innerText = isAdminLoggedIn ? 'Tích hợp Mã QR Lên Cloud (Admin)' : 'Đăng ký sản phẩm mới';
             generateRandomId();
 
+            const toLocalInput = (d) => {
+                const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+                return z.toISOString().slice(0, 16);
+            };
             const now = new Date();
-            document.getElementById('prodMfgDate').value = now.toISOString().slice(0, 16);
-            
+            document.getElementById('prodMfgDate').value = toLocalInput(now);
+
             const bBefore = new Date(now);
             bBefore.setDate(bBefore.getDate() + 3);
-            document.getElementById('prodBestBefore').value = bBefore.toISOString().slice(0, 16);
+            document.getElementById('prodBestBefore').value = toLocalInput(bBefore);
 
             const exp = new Date(now);
             exp.setDate(exp.getDate() + 7);
-            document.getElementById('prodExpiry').value = exp.toISOString().slice(0, 16);
+            document.getElementById('prodExpiry').value = toLocalInput(exp);
 
             document.getElementById('addModal').classList.remove('hidden');
         }
 
         window.openUserProposeModal = function() {
+            if (isAdminLoggedIn) { openAddModal(); return; }
             openAddModal();
             document.getElementById('isProposeForm').value = "true";
             document.getElementById('modalTitle').innerText = 'Đăng ký Thực phẩm Mới (Chờ duyệt)';
@@ -1270,7 +1284,7 @@
             const hiddenId = (document.getElementById('prodId').value || '').trim();
             const inputId = (document.getElementById('prodCustomId').value || '').trim();
             let rawId = inputId || hiddenId;
-            const customId = rawId.replace(/\s+/g, '');
+            const customId = rawId.replace(/[\s\/\\'"<>]+/g, '');
 
             if (!customId) {
                 showToast("Vui lòng nhập hoặc tạo Mã Định Danh QR hợp lệ!", "error");
@@ -1299,6 +1313,14 @@
 
             try {
                 const docRef = doc(db, 'products', customId);
+                const isEditing = !!hiddenId;
+                if (!isEditing) {
+                    const existing = await getDoc(docRef);
+                    if (existing.exists()) {
+                        showToast(`Mã "${customId}" đã tồn tại, hãy bấm "Tạo 6 chữ số" để lấy mã khác!`, "error");
+                        return;
+                    }
+                }
                 await setDoc(docRef, {
                     name,
                     barcode,
@@ -1317,7 +1339,10 @@
                 closeAddModal();
             } catch (err) {
                 console.error("Save error:", err);
-                showToast("Lỗi Firestore: " + err.message, "error");
+                const hint = (err && err.code === 'permission-denied')
+                    ? "Firestore từ chối ghi dữ liệu (kiểm tra Rules trong Firebase Console)"
+                    : err.message;
+                showToast("Lỗi lưu Firestore: " + hint, "error");
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Lưu lên Firebase";
@@ -1513,7 +1538,8 @@
             if (type === "warning") borderBg = "bg-amber-600 text-white";
 
             toast.className = `${borderBg} px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 transform transition-all duration-300 translate-y-4 opacity-0 pointer-events-auto`;
-            toast.innerHTML = `<i data-lucide="info" class="w-4 h-4"><span>${msg}</span>`;
+            toast.innerHTML = `<i data-lucide="info" class="w-4 h-4 shrink-0"></i><span></span>`;
+            toast.querySelector('span').textContent = msg;
 
             container.appendChild(toast);
             lucide.createIcons();
