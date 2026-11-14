@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FreshTrack - Quản Lý & Tra Cứu Hạn Dùng Đám Mây</title>
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,7 +19,7 @@
         }
     </script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- HTML5 QrCode Scanner Library -->
@@ -69,7 +69,7 @@
                     </div>
                     <div>
                         <h1 class="font-bold text-xl text-slate-900 dark:text-white leading-tight">FreshTrack</h1>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Hệ thống Tra cứu Chất lượng Sản phẩm</p>
+                        <p class="hidden sm:block text-xs text-slate-500 dark:text-slate-400 font-medium">Hệ thống Tra cứu Chất lượng Sản phẩm</p>
                     </div>
                 </a>
                 
@@ -94,9 +94,9 @@
                 </button>
 
                 <!-- Daily Notification Toggle -->
-                <button id="notifToggleBtn" onclick="toggleDailyNotification()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all border border-slate-200 dark:border-slate-600">
+                <button id="notifToggleBtn" onclick="toggleDailyNotification()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all border border-slate-200 dark:border-slate-600">
                     <i data-lucide="bell" id="notifIcon" class="w-4 h-4 text-slate-500 dark:text-slate-400"></i>
-                    <span id="notifStatusText">Bật thông báo</span>
+                    <span id="notifStatusText" class="hidden sm:inline">Bật thông báo</span>
                 </button>
 
                 <!-- Web Camera Scan Button -->
@@ -319,15 +319,15 @@
 
             <!-- Toolbar / Filters / Add Product -->
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm flex flex-col lg:flex-row gap-4 items-center justify-between">
-                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto flex-1">
+                <div class="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full lg:w-auto flex-1">
                     <!-- Search input -->
-                    <div class="relative flex-1">
+                    <div class="relative flex-1 min-w-[180px]">
                         <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="searchInput" oninput="renderProducts()" placeholder="Tìm tên sản phẩm, ID mã QR, mã vạch..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                        <input type="text" id="searchInput" oninput="onSearchInput()" placeholder="Tìm tên sản phẩm, ID mã QR, mã vạch..." class="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
                     </div>
                     
                     <!-- Category Filter -->
-                    <select id="categoryFilter" onchange="renderProducts()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    <select id="categoryFilter" onchange="onSearchInput()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                         <option value="ALL">Tất cả danh mục</option>
                         <option value="Sữa & Chế phẩm">Sữa & Chế phẩm</option>
                         <option value="Thịt tươi sống">Thịt tươi sống</option>
@@ -340,11 +340,26 @@
                     </select>
 
                     <!-- Status Filter -->
-                    <select id="statusFilter" onchange="renderProducts()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                    <select id="statusFilter" onchange="onFilterChanged()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
                         <option value="ALL">Tất cả trạng thái</option>
                         <option value="FRESH">Tươi ngon nhất</option>
                         <option value="EAT_SOON">Nên dùng ngay</option>
                         <option value="EXPIRED">Đã hết hạn</option>
+                    </select>
+
+                    <!-- Quick time filter -->
+                    <select id="quickFilter" onchange="onFilterChanged()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <option value="ALL">Mọi thời hạn</option>
+                        <option value="EXPIRED">Đã hết hạn</option>
+                        <option value="24H">Hết hạn trong 24 giờ</option>
+                        <option value="3D">Hết hạn trong 3 ngày</option>
+                        <option value="7D">Hết hạn trong 7 ngày</option>
+                    </select>
+
+                    <!-- Sort -->
+                    <select id="sortFilter" onchange="onFilterChanged()" class="bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                        <option value="URGENT">Sắp xếp: Khẩn cấp nhất</option>
+                        <option value="LATEST">Sắp xếp: Hạn xa nhất</option>
                     </select>
                 </div>
 
@@ -358,6 +373,7 @@
             <!-- Tab 1: Product Grid -->
             <div id="tabInventory" class="space-y-4">
                 <div id="productList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+                <div id="skeletonList" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" aria-hidden="true"></div>
                 <div id="loadMoreContainer" class="hidden text-center pt-4">
                     <button onclick="loadMoreProducts()" class="px-6 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 rounded-xl transition-all">
                         Tải thêm sản phẩm...
@@ -378,6 +394,7 @@
                 </div>
                 <h3 class="font-bold text-slate-700 dark:text-slate-200 text-base" id="emptyStateTitle">Chưa có sản phẩm nào được lưu trên thiết bị này</h3>
                 <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="emptyStateSub">Hãy quét mã QR hoặc đăng ký sản phẩm mới để bắt đầu theo dõi.</p>
+                <a id="indexLink" target="_blank" rel="noopener" class="hidden mt-3 text-xs font-bold text-blue-600 underline">Mở trang tạo chỉ mục Firestore</a><br>
                 <button onclick="openScannerModal()" class="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-2 rounded-lg hover:bg-emerald-100 transition-colors">
                     <i data-lucide="camera" class="w-4 h-4"></i>
                     Quét mã QR ngay
@@ -598,7 +615,7 @@
     <!-- FIREBASE INTEGRATION SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, startAfter, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // Cấu hình Firebase dự án fresh-track-dt
@@ -633,6 +650,14 @@
         // Lazy loading pagination control
         let currentDisplayLimit = 12;
 
+        const ADMIN_PAGE = 12, ADMIN_SEARCH_PAGE = 40, CACHE_KEY = 'freshtrack_product_cache_v1';
+        let isLoading = true;
+        let adminItems = [], adminCursor = null, adminHasMore = false, adminLoading = false, adminToken = 0, adminTarget = ADMIN_PAGE, adminStats = null;
+        let pendingItems = [], unsubscribePending = null;
+        let customerItems = [], customerToken = 0, customerCache = readCache();
+        let needIndex = false, indexLink = '', indexToastShown = false;
+        let currentPublicProd = null, tickCount = 0, searchTimer = null;
+
         // Khởi tạo Firebase Firestore
         function initFirebase() {
             try {
@@ -646,6 +671,7 @@
             } catch (err) {
                 console.error("Firebase Connection Error:", err);
                 updateSyncBadge('offline', '🔴 Lỗi kết nối Cloud');
+                setLoading(false);
             }
         }
 
@@ -656,59 +682,248 @@
             }
         }
 
-        // Realtime listener tuned to user/admin specs
+        // ============ LỚP DỮ LIỆU: khách chỉ tải ID đã quét, admin phân trang phía server ============
+        function localIso(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
+        function readCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '{}'); } catch (e) { return {}; } }
+        function writeCache() { try { localStorage.setItem(CACHE_KEY, JSON.stringify(customerCache)); } catch (e) {} }
+        function syncProducts() { products = isAdminLoggedIn ? [...adminItems, ...pendingItems] : [...customerItems]; }
+
+        function setLoading(flag) {
+            isLoading = flag;
+            const sk = document.getElementById('skeletonList');
+            if (sk) {
+                if (flag && !sk.children.length) {
+                    sk.innerHTML = Array(6).fill(`<div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 p-5 space-y-3 animate-pulse">
+                        <div class="flex justify-between"><div class="h-5 w-24 rounded-lg bg-slate-200 dark:bg-slate-700"></div><div class="h-5 w-28 rounded-full bg-slate-200 dark:bg-slate-700"></div></div>
+                        <div class="h-5 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-4 w-1/2 rounded bg-slate-100 dark:bg-slate-700/60"></div>
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2"><div class="h-4 rounded bg-slate-100 dark:bg-slate-700/60"></div><div class="h-4 rounded bg-slate-100 dark:bg-slate-700/60"></div></div>
+                        <div class="h-8 w-32 rounded-xl bg-slate-200 dark:bg-slate-700"></div></div>`).join('');
+                }
+                sk.classList.toggle('hidden', !flag);
+            }
+            if (flag) { const lm = document.getElementById('loadMoreContainer'); if (lm) lm.classList.add('hidden'); const em = document.getElementById('emptyState'); if (em) em.classList.add('hidden'); }
+        }
+
+        function setStatsSkeleton() {
+            ['statTotal', 'statFresh', 'statEatSoon', 'statExpired'].forEach(id => {
+                document.getElementById(id).innerHTML = '<span class="inline-block h-6 w-10 rounded bg-slate-200 dark:bg-slate-700 animate-pulse align-middle"></span>';
+            });
+        }
+
         async function handleAuthStateChanged(user) {
             isAdminLoggedIn = false;
             currentAdminEmail = '';
-
             if (user) {
                 try {
                     const adminSnap = await getDoc(doc(db, 'admins', user.uid));
                     isAdminLoggedIn = adminSnap.exists();
-                } catch (err) {
-                    console.error("Admin check error:", err);
-                }
+                } catch (err) { console.error("Admin check error:", err); }
                 if (!isAdminLoggedIn) {
                     showToast("Tài khoản này không có quyền quản trị!", "error");
-                    await signOut(auth);   // sẽ gọi lại hàm này với user = null
+                    await signOut(auth);
                     return;
                 }
                 currentAdminEmail = user.email || '';
             }
-
             applyAdminUIDistinction();
             switchAdminTab('inventory');
-            setupRealtimeProductsListener();
+            startData();
+            handleRoutingAndRender();
         }
 
-        function setupRealtimeProductsListener() {
-            if (!db) return;
-            if (unsubscribeProducts) { unsubscribeProducts(); unsubscribeProducts = null; }
-            products = [];
+        function startData() {
+            if (unsubscribePending) { unsubscribePending(); unsubscribePending = null; }
+            adminToken++; customerToken++;
+            adminItems = []; pendingItems = []; customerItems = []; adminCursor = null; adminHasMore = false; adminStats = null;
+            needIndex = false; adminTarget = ADMIN_PAGE;
+            syncProducts();
+            if (isAdminLoggedIn) startAdminData(); else startCustomerData();
+        }
 
-            // Admin đọc toàn bộ; khách chỉ đọc sản phẩm đã duyệt (khớp với Firestore Rules)
-            const productsRef = collection(db, 'products');
-            const productsQuery = isAdminLoggedIn
-                ? productsRef
-                : query(productsRef, where('status', '==', 'approved'));
+        // ----- KHÁCH: chỉ đọc các sản phẩm đã quét (getDoc theo ID) + cache offline -----
+        function startCustomerData() {
+            customerItems = deviceScannedIds.map(id => customerCache[id]).filter(Boolean);
+            syncProducts();
+            setLoading(deviceScannedIds.length > 0 && customerItems.length === 0);
+            renderProducts();
+            loadCustomerProducts();
+        }
 
-            unsubscribeProducts = onSnapshot(productsQuery, (snapshot) => {
-                products = [];
-                snapshot.forEach((docSnap) => {
-                    products.push({ id: docSnap.id, ...docSnap.data() });
-                });
-
-                products.sort((a, b) => new Date(b.mfgDate) - new Date(a.mfgDate));
-
-                handleRoutingAndRender();
-                updatePendingBadge();
-            }, (error) => {
-                console.error("Firestore error:", error);
-                showToast("Lỗi đồng bộ Firestore: " + error.message, "error");
+        async function loadCustomerProducts() {
+            if (!db || isAdminLoggedIn) return;
+            const token = ++customerToken;
+            const ids = [...deviceScannedIds];
+            if (!ids.length) { customerItems = []; syncProducts(); setLoading(false); renderProducts(); checkDailyDigest(); return; }
+            const results = await Promise.all(ids.map(async id => {
+                try {
+                    const snap = await getDoc(doc(db, 'products', id));
+                    return snap.exists() ? { id, state: 'ok', data: { id: snap.id, ...snap.data() } } : { id, state: 'gone' };
+                } catch (err) { return { id, state: err && err.code === 'permission-denied' ? 'hidden' : 'error' }; }
+            }));
+            if (token !== customerToken || isAdminLoggedIn) return;
+            const next = []; let idsChanged = false;
+            results.forEach(r => {
+                if (r.state === 'ok' && r.data.status !== 'pending') { customerCache[r.id] = r.data; next.push(r.data); }
+                else if (r.state === 'gone') { delete customerCache[r.id]; deviceScannedIds = deviceScannedIds.filter(x => x !== r.id); idsChanged = true; }
+                else if (r.state === 'error' && customerCache[r.id]) next.push(customerCache[r.id]);
+                else delete customerCache[r.id];
             });
+            if (idsChanged) localStorage.setItem('freshtrack_scanned_ids', JSON.stringify(deviceScannedIds));
+            if (!next.length && results.some(r => r.state === 'error')) showToast("Không tải được dữ liệu, vui lòng kiểm tra mạng", "warning");
+            writeCache();
+            customerItems = next;
+            syncProducts(); setLoading(false); renderProducts(); checkDailyDigest(); checkAndNotify();
         }
 
-        function updateSyncBadge(status, text) {
+        function upsertCustomerProduct(prod) {
+            if (isAdminLoggedIn) return;
+            saveScannedIdToDevice(prod.id);
+            customerCache[prod.id] = prod; writeCache();
+            customerItems = [prod, ...customerItems.filter(x => x.id !== prod.id)];
+            syncProducts(); renderProducts();
+        }
+
+        // ----- ADMIN: phân trang bằng con trỏ (limit + startAfter), đếm bằng aggregation -----
+        function startAdminData() {
+            setStatsSkeleton();
+            const pq = query(collection(db, 'products'), where('status', '==', 'pending'), limit(100));
+            unsubscribePending = onSnapshot(pq, snap => {
+                pendingItems = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                syncProducts(); updatePendingBadge(); renderProducts();
+            }, err => handleDataError(err));
+            loadAdminPage(true);
+            refreshAdminStats();
+        }
+
+        function getFilters() {
+            return {
+                search: document.getElementById('searchInput').value.toLowerCase().trim(),
+                cat: document.getElementById('categoryFilter').value,
+                status: document.getElementById('statusFilter').value,
+                quick: document.getElementById('quickFilter').value,
+                sort: document.getElementById('sortFilter').value
+            };
+        }
+
+        function matchesQuick(p, quick) {
+            if (quick === 'ALL') return true;
+            const diff = new Date(p.expiry).getTime() - Date.now();
+            if (isNaN(diff)) return false;
+            if (quick === 'EXPIRED') return diff < 0;
+            return diff >= 0 && diff <= ({ '24H': 1, '3D': 3, '7D': 7 }[quick]) * 86400000;
+        }
+
+        function clientMatch(p, f, withQuick) {
+            const st = getProductStatus(p);
+            if (f.search && !((p.name || '').toLowerCase().includes(f.search) || (p.id || '').toLowerCase().includes(f.search) || String(p.barcode || '').toLowerCase().includes(f.search))) return false;
+            if (f.cat !== 'ALL' && p.category !== f.cat) return false;
+            if (f.status !== 'ALL' && st.code !== f.status) return false;
+            return !withQuick || matchesQuick(p, f.quick);
+        }
+
+        function clientFiltersActive(f) { return !!f.search || f.cat !== 'ALL' || f.status === 'FRESH' || f.status === 'EAT_SOON'; }
+        function adminMatchCount() { const f = getFilters(); return adminItems.filter(p => clientMatch(p, f, false)).length; }
+
+        // Quy lọc thời hạn/ trạng thái thành khoảng giá trị của "expiry" để Firestore lọc phía server
+        function getServerBounds(f) {
+            const now = new Date(), nowIso = localIso(now);
+            let lo = null, hi = null;
+            const setLo = v => { if (lo === null || v > lo) lo = v; };
+            const setHi = (val, op) => { if (!hi || val < hi.val || (val === hi.val && op === '<')) hi = { val, op }; };
+            if (f.quick === 'EXPIRED') setHi(nowIso, '<');
+            else if (f.quick !== 'ALL') { setLo(nowIso); setHi(localIso(new Date(now.getTime() + ({ '24H': 1, '3D': 3, '7D': 7 }[f.quick]) * 86400000)), '<='); }
+            if (f.status === 'EXPIRED') setHi(nowIso, '<');
+            if (f.status === 'FRESH' || f.status === 'EAT_SOON') setLo(nowIso);
+            return { lo, hi };
+        }
+
+        function buildAdminQuery(f, cursor, size) {
+            const c = [where('status', '==', 'approved')];
+            const b = getServerBounds(f);
+            if (b.lo) c.push(where('expiry', '>=', b.lo));
+            if (b.hi) c.push(where('expiry', b.hi.op, b.hi.val));
+            c.push(orderBy('expiry', f.sort === 'LATEST' ? 'desc' : 'asc'));
+            if (cursor) c.push(startAfter(cursor));
+            c.push(limit(size));
+            return query(collection(db, 'products'), ...c);
+        }
+
+        async function loadAdminPage(reset) {
+            if (!isAdminLoggedIn || !db) return;
+            if (adminLoading && !reset) return;
+            const token = ++adminToken;
+            adminLoading = true;
+            if (reset) { adminItems = []; adminCursor = null; adminHasMore = false; adminTarget = ADMIN_PAGE; syncProducts(); renderProducts(); }
+            setLoading(true);
+            try {
+                const f = getFilters();
+                const size = clientFiltersActive(f) ? ADMIN_SEARCH_PAGE : ADMIN_PAGE;
+                for (let guard = 0; guard < 8; guard++) {
+                    const snap = await getDocs(buildAdminQuery(f, adminCursor, size));
+                    if (token !== adminToken) return;
+                    snap.docs.forEach(d => adminItems.push({ id: d.id, ...d.data() }));
+                    if (snap.docs.length) adminCursor = snap.docs[snap.docs.length - 1];
+                    adminHasMore = snap.docs.length === size;
+                    needIndex = false;
+                    if (!adminHasMore || adminMatchCount() >= adminTarget) break;
+                }
+            } catch (err) {
+                if (token === adminToken) handleDataError(err);
+            } finally {
+                if (token === adminToken) { adminLoading = false; setLoading(false); syncProducts(); renderProducts(); }
+            }
+        }
+
+        async function refreshAdminStats() {
+            if (!isAdminLoggedIn || !db) return;
+            const col = collection(db, 'products'), nowIso = localIso(new Date()), ok = where('status', '==', 'approved');
+            try {
+                const [t, ex, fr] = await Promise.all([
+                    getCountFromServer(query(col, ok)),
+                    getCountFromServer(query(col, ok, where('expiry', '<', nowIso))),
+                    getCountFromServer(query(col, ok, where('bestBefore', '>=', nowIso)))
+                ]);
+                const total = t.data().count, expired = ex.data().count, fresh = fr.data().count;
+                adminStats = { total, expired, fresh, eatSoon: Math.max(0, total - expired - fresh) };
+                document.getElementById('statTotal').innerText = adminStats.total;
+                document.getElementById('statFresh').innerText = adminStats.fresh;
+                document.getElementById('statEatSoon').innerText = adminStats.eatSoon;
+                document.getElementById('statExpired').innerText = adminStats.expired;
+                checkDailyDigest();
+            } catch (err) {
+                ['statTotal', 'statFresh', 'statEatSoon', 'statExpired'].forEach(id => document.getElementById(id).innerText = '—');
+                handleDataError(err);
+            }
+        }
+
+        function afterAdminMutation() { if (isAdminLoggedIn) { loadAdminPage(true); refreshAdminStats(); } }
+
+        function handleDataError(err) {
+            console.error("Firestore error:", err);
+            if (err && err.code === 'failed-precondition') {
+                needIndex = true;
+                const m = String(err.message || '').match(/https:\/\/console\.firebase\.google\.com\/[^\s]+/);
+                indexLink = m ? m[0] : '';
+                if (!indexToastShown) { indexToastShown = true; showToast("Cần tạo chỉ mục Firestore (làm 1 lần) - xem hướng dẫn trên trang", "error"); }
+            } else {
+                showToast("Lỗi đồng bộ Firestore: " + (err && err.message), "error");
+            }
+        }
+
+        window.onFilterChanged = function() {
+            currentDisplayLimit = 12;
+            if (isAdminLoggedIn) loadAdminPage(true); else renderProducts();
+        }
+
+        window.onSearchInput = function() {
+            currentDisplayLimit = 12;
+            renderProducts();
+            if (!isAdminLoggedIn) return;
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => { if (adminHasMore && !adminLoading && adminMatchCount() < adminTarget) loadAdminPage(false); }, 400);
+        }
+
+function updateSyncBadge(status, text) {
             const badge = document.getElementById('syncBadge');
             const textElem = document.getElementById('syncText');
             if (!badge || !textElem) return;
@@ -846,37 +1061,68 @@
             applyAdminUIDistinction();
             lucide.createIcons();
             initNotificationsState();
+            setLoading(true);
             initFirebase();
+            setInterval(tick, 60000);
         };
+
+        // Nút Back/Forward của trình duyệt: đồng bộ lại giao diện theo URL
+        window.addEventListener('popstate', handleRoutingAndRender);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 
         function handleRoutingAndRender() {
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id') || urlParams.get('code');
-
-            if (targetId) {
-                saveScannedIdToDevice(targetId);
-                showPublicCustomerView(targetId);
-            } else {
-                switchToAdminView();
-            }
+            if (targetId) showPublicCustomerView(targetId);
+            else switchToAdminView();
             checkDailyDigest();
         }
 
+        // Mỗi phút: cập nhật trạng thái theo thời gian thực + kiểm tra thông báo
+        function tick() {
+            tickCount++;
+            const pv = document.getElementById('publicCustomerView');
+            if (!pv.classList.contains('hidden') && currentPublicProd) fillPublicStatus(currentPublicProd);
+            else renderProducts();
+            checkDailyDigest();
+            checkAndNotify();
+            if (isAdminLoggedIn && tickCount % 5 === 0) refreshAdminStats();
+        }
+
+        // ================= THÔNG BÁO HẠN DÙNG =================
+        const NOTIF_KEY = 'freshtrack_notified_v1';
+        let notifiedMap = {};
+        try { notifiedMap = JSON.parse(localStorage.getItem(NOTIF_KEY) || '{}'); } catch (e) {}
+
         function initNotificationsState() {
-            notificationsEnabled = localStorage.getItem('freshtrack_notif') === 'true';
+            notificationsEnabled = localStorage.getItem('freshtrack_notif') === 'true' && 'Notification' in window && Notification.permission === 'granted';
             updateNotifUI();
         }
 
-        window.toggleDailyNotification = function() {
-            notificationsEnabled = !notificationsEnabled;
-            localStorage.setItem('freshtrack_notif', notificationsEnabled ? 'true' : 'false');
-            updateNotifUI();
-            
-            if (notificationsEnabled && "Notification" in window) {
-                Notification.requestPermission();
+        window.toggleDailyNotification = async function() {
+            if (notificationsEnabled) {
+                notificationsEnabled = false;
+                localStorage.setItem('freshtrack_notif', 'false');
+                updateNotifUI();
+                showToast("Đã tắt nhắc nhở", "info");
+                return;
             }
-            
-            showToast(notificationsEnabled ? "Đã bật nhắc nhở chất lượng!" : "Đã tắt nhắc nhở", "success");
+            if (!('Notification' in window)) {
+                showToast("Thiết bị không hỗ trợ thông báo hệ thống. Bạn vẫn thấy cảnh báo ngay trong ứng dụng.", "warning");
+                return;
+            }
+            let perm = Notification.permission;
+            if (perm === 'default') perm = await Notification.requestPermission();
+            if (perm !== 'granted') {
+                showToast("Bạn chưa cho phép thông báo. Hãy bật quyền thông báo cho trang này trong cài đặt trình duyệt.", "error");
+                return;
+            }
+            notificationsEnabled = true;
+            localStorage.setItem('freshtrack_notif', 'true');
+            updateNotifUI();
+            showToast("Đã bật nhắc nhở hạn dùng!", "success");
+            const sent = await checkAndNotify(true);
+            if (!sent) sendNotification("FreshTrack", "Đã bật nhắc nhở. Hiện chưa có sản phẩm nào cần chú ý ✅", "");
         }
 
         function updateNotifUI() {
@@ -884,15 +1130,56 @@
             const icon = document.getElementById('notifIcon');
             const text = document.getElementById('notifStatusText');
             if (!btn) return;
-
             if (notificationsEnabled) {
-                btn.className = "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700";
-                if(icon) icon.setAttribute('class', "w-4 h-4 text-emerald-600 fill-emerald-600");
-                if(text) text.innerText = "Thông báo: BẬT";
+                btn.className = "flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700";
+                if (icon) icon.setAttribute('class', "w-4 h-4 text-emerald-600 fill-emerald-600");
+                if (text) text.innerText = "Thông báo: BẬT";
             } else {
-                btn.className = "hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600";
-                if(icon) icon.setAttribute('class', "w-4 h-4 text-slate-500 dark:text-slate-400");
-                if(text) text.innerText = "Bật thông báo";
+                btn.className = "flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600";
+                if (icon) icon.setAttribute('class', "w-4 h-4 text-slate-500 dark:text-slate-400");
+                if (text) text.innerText = "Bật thông báo";
+            }
+        }
+
+        // Mức cảnh báo: 3 = đã hết hạn, 2 = còn dưới 24 giờ, 1 = quá hạn ngon nhất (nên dùng ngay)
+        function notifLevel(p) {
+            const now = Date.now(), exp = new Date(p.expiry).getTime(), bb = new Date(p.bestBefore).getTime();
+            if (isNaN(exp)) return 0;
+            if (now > exp) return 3;
+            if (exp - now <= 86400000) return 2;
+            return (!isNaN(bb) && now > bb) ? 1 : 0;
+        }
+
+        async function checkAndNotify(force) {
+            if (!notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted') return false;
+            const hits = [];
+            products.forEach(p => {
+                if (p.status === 'pending') return;
+                const lvl = notifLevel(p), sig = p.expiry + '|' + p.bestBefore, rec = notifiedMap[p.id];
+                const prev = rec && rec.sig === sig ? rec.level : 0;
+                if (lvl > 0 && (force || lvl > prev)) hits.push({ p, lvl });   // chỉ báo khi mức cảnh báo tăng lên
+                if (lvl > 0) notifiedMap[p.id] = { sig, level: lvl };
+            });
+            try { localStorage.setItem(NOTIF_KEY, JSON.stringify(notifiedMap)); } catch (e) {}
+            if (!hits.length) return false;
+            hits.sort((a, b) => b.lvl - a.lvl);
+            const c = l => hits.filter(h => h.lvl === l).length;
+            const parts = [];
+            if (c(3)) parts.push(`${c(3)} đã hết hạn`);
+            if (c(2)) parts.push(`${c(2)} còn dưới 24 giờ`);
+            if (c(1)) parts.push(`${c(1)} nên dùng ngay`);
+            const names = hits.slice(0, 3).map(h => h.p.name).join(', ') + (hits.length > 3 ? '…' : '');
+            return sendNotification('FreshTrack: cần chú ý hạn dùng', parts.join(' · ') + '\n' + names, hits.length === 1 ? getProductDirectUrl(hits[0].p.id) : '');
+        }
+
+        async function sendNotification(title, body, url) {
+            try {
+                const n = new Notification(title, { body, tag: 'freshtrack-alert', renotify: true });
+                n.onclick = () => { window.focus(); if (url) window.location.href = url; n.close(); };
+                return true;
+            } catch (e) {
+                showToast(title + ': ' + body.replace('\n', ' - '), "warning");   // trình duyệt chặn Notification() (vd. Android): báo ngay trong app
+                return true;
             }
         }
 
@@ -1001,72 +1288,65 @@
             }
         }
 
+        function fillPublicStatus(prod) {
+            const status = getProductStatus(prod);
+            document.getElementById('publicStatusBanner').className = `p-6 text-white text-center transition-colors ${status.bannerBg}`;
+            document.getElementById('publicStatusTitle').innerText = status.label;
+            document.getElementById('publicBestBeforeTime').innerText = formatTimeDiff(prod.bestBefore);
+            document.getElementById('publicSafeExpiryTime').innerText = formatTimeDiff(prod.expiry);
+        }
+
+        async function fetchProductRemote(key) {
+            try {
+                const snap = await getDoc(doc(db, 'products', key));
+                if (snap.exists() && snap.data().status !== 'pending') return { id: snap.id, ...snap.data() };
+            } catch (e) { console.warn("Cloud fetch (id):", e); }
+            try {   // thử tra theo mã vạch
+                const qs = await getDocs(query(collection(db, 'products'), where('barcode', '==', key), where('status', '==', 'approved'), limit(1)));
+                if (!qs.empty) return { id: qs.docs[0].id, ...qs.docs[0].data() };
+            } catch (e) { console.warn("Cloud fetch (barcode):", e); }
+            return null;
+        }
+
         window.showPublicCustomerView = async function(prodId) {
             let prod = products.find(p => (p.id === prodId || p.barcode === prodId) && p.status !== 'pending');
-            
-            // If not found in current memory list, query directly from Firestore Cloud
-            if (!prod && db) {
-                try {
-                    const docRef = doc(db, 'products', prodId);
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists() && docSnap.data().status !== 'pending') {
-                        prod = { id: docSnap.id, ...docSnap.data() };
-                    }
-                } catch(e) { console.error("Cloud fetch error:", e); }
-            }
-
-            const publicView = document.getElementById('publicCustomerView');
-            const adminView = document.getElementById('adminView');
+            if (!prod && db) prod = await fetchProductRemote(prodId);
 
             if (!prod) {
                 showToast(`Không tìm thấy hoặc sản phẩm mã "${prodId}" đang chờ kiểm duyệt`, "info");
                 return;
             }
 
-            saveScannedIdToDevice(prod.id);
+            if (isAdminLoggedIn) saveScannedIdToDevice(prod.id);
+            else if (!customerItems.some(x => x.id === prod.id)) upsertCustomerProduct(prod);
 
-            adminView.classList.add('hidden');
-            publicView.classList.remove('hidden');
+            document.getElementById('adminView').classList.add('hidden');
+            document.getElementById('publicCustomerView').classList.remove('hidden');
+            currentPublicProd = prod;
 
-            // Giữ ?id=... trên URL để khi Firestore cập nhật realtime không tự quay về trang quản trị
+            // Cập nhật URL: thêm mới nếu chưa có ?id, thay thế nếu đang là mã vạch (tránh kẹt vòng lặp nút Back)
             try {
                 const curId = new URLSearchParams(window.location.search).get('id');
-                if (curId !== prod.id) {
-                    window.history.pushState({}, document.title, `${window.location.pathname}?id=${encodeURIComponent(prod.id)}`);
-                }
-            } catch (err) { console.warn("Push state warning:", err); }
+                const newUrl = `${window.location.pathname}?id=${encodeURIComponent(prod.id)}`;
+                if (!curId) window.history.pushState({}, document.title, newUrl);
+                else if (curId !== prod.id) window.history.replaceState({}, document.title, newUrl);
+            } catch (err) { console.warn("History warning:", err); }
 
-            const status = getProductStatus(prod);
-
-            document.getElementById('publicStatusBanner').className = `p-6 text-white text-center transition-colors ${status.bannerBg}`;
-            document.getElementById('publicStatusTitle').innerText = status.label;
+            fillPublicStatus(prod);
             document.getElementById('publicProductName').innerText = prod.name;
             document.getElementById('publicCategory').innerText = prod.category;
             document.getElementById('publicLot').innerText = prod.lot ? `Số lô: ${prod.lot}` : '';
             document.getElementById('publicBarcode').innerText = prod.barcode || prod.id;
-
-            document.getElementById('publicBestBeforeTime').innerText = formatTimeDiff(prod.bestBefore);
             document.getElementById('publicBestBeforeDate').innerText = `Hạn: ${formatDate(prod.bestBefore)}`;
-
-            document.getElementById('publicSafeExpiryTime').innerText = formatTimeDiff(prod.expiry);
             document.getElementById('publicSafeExpiryDate').innerText = `Hạn an toàn: ${formatDate(prod.expiry)}`;
-
             document.getElementById('publicMfgDate').innerText = formatDate(prod.mfgDate);
             document.getElementById('publicNotes').innerText = prod.notes || 'Bảo quản nơi khô ráo thoáng mát';
 
             const directUrl = getProductDirectUrl(prod.id);
             document.getElementById('publicDirectUrl').innerText = directUrl;
-
             const qrBox = document.getElementById('publicQrContainer');
             qrBox.innerHTML = '';
-            new QRCode(qrBox, {
-                text: directUrl,
-                width: 120,
-                height: 120,
-                colorDark : "#0f172a",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            new QRCode(qrBox, { text: directUrl, width: 120, height: 120, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
 
             lucide.createIcons();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1078,67 +1358,56 @@
             const pendingContainer = document.getElementById('pendingProductList');
             const emptyState = document.getElementById('emptyState');
             const loadMoreBtn = document.getElementById('loadMoreContainer');
-            const search = document.getElementById('searchInput').value.toLowerCase().trim();
-            const catFilter = document.getElementById('categoryFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
+            const f = getFilters();
 
             container.innerHTML = '';
             pendingContainer.innerHTML = '';
 
-            const approvedProducts = products.filter(p => p.status !== 'pending');
             const pendingProducts = products.filter(p => p.status === 'pending');
+            let filtered, paginatedItems;
 
-            // Device vs Admin rendering filter logic
-            let displayableProducts = [];
             if (isAdminLoggedIn) {
-                displayableProducts = approvedProducts;
+                // Admin: dữ liệu đã được lọc/sắp xếp/phân trang bởi server; thống kê lấy từ refreshAdminStats()
+                filtered = adminItems.filter(p => clientMatch(p, f, false));
+                paginatedItems = filtered;
             } else {
-                // Device level filtering: show products scanned or registered by this device
-                displayableProducts = approvedProducts.filter(p => deviceScannedIds.includes(p.id));
+                const all = customerItems.filter(p => p.status !== 'pending');
+                const counts = { fresh: 0, eatSoon: 0, expired: 0 };
+                all.forEach(p => {
+                    const c = getProductStatus(p).code;
+                    if (c === 'FRESH') counts.fresh++; else if (c === 'EAT_SOON') counts.eatSoon++; else counts.expired++;
+                });
+                document.getElementById('statTotal').innerText = all.length;
+                document.getElementById('statFresh').innerText = counts.fresh;
+                document.getElementById('statEatSoon').innerText = counts.eatSoon;
+                document.getElementById('statExpired').innerText = counts.expired;
+
+                const dir = f.sort === 'LATEST' ? -1 : 1;
+                const t = p => new Date(p.expiry).getTime() || 0;
+                filtered = all.filter(p => clientMatch(p, f, true)).sort((a, b) => dir * (t(a) - t(b)));
+                paginatedItems = filtered.slice(0, currentDisplayLimit);
             }
 
-            let counts = { total: displayableProducts.length, fresh: 0, eatSoon: 0, expired: 0 };
+            const showMore = isAdminLoggedIn ? adminHasMore : filtered.length > currentDisplayLimit;
+            loadMoreBtn.classList.toggle('hidden', !showMore || isLoading);
 
-            displayableProducts.forEach(p => {
-                const st = getProductStatus(p);
-                if (st.code === 'FRESH') counts.fresh++;
-                if (st.code === 'EAT_SOON') counts.eatSoon++;
-                if (st.code === 'EXPIRED') counts.expired++;
-            });
-
-            document.getElementById('statTotal').innerText = counts.total;
-            document.getElementById('statFresh').innerText = counts.fresh;
-            document.getElementById('statEatSoon').innerText = counts.eatSoon;
-            document.getElementById('statExpired').innerText = counts.expired;
-
-            const filtered = displayableProducts.filter(p => {
-                const st = getProductStatus(p);
-                const matchesSearch = p.name.toLowerCase().includes(search) || 
-                                      p.id.toLowerCase().includes(search) || 
-                                      (p.barcode && p.barcode.includes(search));
-                const matchesCat = (catFilter === 'ALL' || p.category === catFilter);
-                const matchesStatus = (statusFilter === 'ALL' || st.code === statusFilter);
-
-                return matchesSearch && matchesCat && matchesStatus;
-            });
-
-            if (filtered.length === 0) {
+            if (isLoading || filtered.length > 0) {
+                emptyState.classList.add('hidden');
+            } else {
                 emptyState.classList.remove('hidden');
-                if (!isAdminLoggedIn) {
+                const link = document.getElementById('indexLink');
+                link.classList.add('hidden');
+                if (isAdminLoggedIn && needIndex) {
+                    document.getElementById('emptyStateTitle').innerText = "Cần tạo chỉ mục Firestore (làm 1 lần)";
+                    document.getElementById('emptyStateSub').innerText = "Tạo 2 chỉ mục cho collection products: (status, expiry) và (status, bestBefore), đợi vài phút rồi tải lại trang.";
+                    if (indexLink.startsWith('https://console.firebase.google.com/')) { link.href = indexLink; link.classList.remove('hidden'); }
+                } else if (isAdminLoggedIn || customerItems.length > 0) {
+                    document.getElementById('emptyStateTitle').innerText = "Không có sản phẩm phù hợp bộ lọc";
+                    document.getElementById('emptyStateSub').innerText = "Hãy thử đổi hoặc xóa bộ lọc tìm kiếm.";
+                } else {
                     document.getElementById('emptyStateTitle').innerText = "Chưa có sản phẩm nào được lưu trên thiết bị này";
                     document.getElementById('emptyStateSub').innerText = "Hãy quét mã QR hoặc đăng ký sản phẩm mới để bắt đầu theo dõi.";
                 }
-            } else {
-                emptyState.classList.add('hidden');
-            }
-
-            // Paginated slice to handle huge product volumes without freezing UI
-            const paginatedItems = filtered.slice(0, currentDisplayLimit);
-
-            if (filtered.length > currentDisplayLimit) {
-                loadMoreBtn.classList.remove('hidden');
-            } else {
-                loadMoreBtn.classList.add('hidden');
             }
 
             paginatedItems.forEach(p => {
@@ -1239,8 +1508,8 @@
         }
 
         window.loadMoreProducts = function() {
-            currentDisplayLimit += 12;
-            renderProducts();
+            if (isAdminLoggedIn) { adminTarget = adminMatchCount() + ADMIN_PAGE; loadAdminPage(false); }
+            else { currentDisplayLimit += 12; renderProducts(); }
         }
 
         // INSPECT PENDING DETAILS MODAL LOGIC
@@ -1296,6 +1565,7 @@
                 const docRef = doc(db, 'products', id);
                 await updateDoc(docRef, { status: 'approved' });
                 showToast("Đã duyệt thành công sản phẩm!", "success");
+                afterAdminMutation();
             } catch (err) {
                 showToast("Lỗi duyệt sản phẩm: " + err.message, "error");
             }
@@ -1419,6 +1689,7 @@
                 saveScannedIdToDevice(customId);
                 showToast(isPropose ? "Đã gửi đăng ký! Sản phẩm sẽ hiển thị sau khi Admin duyệt." : "Đã lưu thành công lên Firebase!", "success");
                 closeAddModal();
+                afterAdminMutation();
             } catch (err) {
                 console.error("Save error:", err);
                 let hint = err.message;
@@ -1467,6 +1738,7 @@
                     const docRef = doc(db, 'products', id);
                     await deleteDoc(docRef);
                     showToast("Đã xóa khỏi Cloud", "info");
+                    afterAdminMutation();
                 } catch(err) {
                     showToast("Lỗi xóa: " + err.message, "error");
                 }
@@ -1578,20 +1850,20 @@
         // DAILY DIGEST & TOAST
         function checkDailyDigest() {
             const now = new Date();
-            const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
             const dateElem = document.getElementById('todayDateStr');
-            if (dateElem) dateElem.innerText = dateStr;
+            if (dateElem) dateElem.innerText = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
 
-            let expiredCount = 0;
-            let eatSoonCount = 0;
-
-            const approvedProducts = products.filter(p => p.status !== 'pending' && (isAdminLoggedIn || deviceScannedIds.includes(p.id)));
-
-            approvedProducts.forEach(p => {
-                const st = getProductStatus(p);
-                if (st.code === 'EXPIRED') expiredCount++;
-                if (st.code === 'EAT_SOON') eatSoonCount++;
-            });
+            let expiredCount = 0, eatSoonCount = 0, totalCount = 0;
+            if (isAdminLoggedIn) {
+                if (adminStats) ({ expired: expiredCount, eatSoon: eatSoonCount, total: totalCount } = adminStats);
+            } else {
+                customerItems.forEach(p => {
+                    const c = getProductStatus(p).code;
+                    totalCount++;
+                    if (c === 'EXPIRED') expiredCount++;
+                    if (c === 'EAT_SOON') eatSoonCount++;
+                });
+            }
 
             const banner = document.getElementById('dailyDigestBanner');
             const content = document.getElementById('dailyDigestContent');
@@ -1599,10 +1871,10 @@
 
             if (expiredCount > 0 || eatSoonCount > 0) {
                 banner.classList.remove('hidden');
-                if(content) content.innerText = `Cảnh báo: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng gấp!`;
-            } else if (approvedProducts.length > 0) {
+                if (content) content.innerText = `Cảnh báo: Có ${expiredCount} sản phẩm đã hết hạn và ${eatSoonCount} sản phẩm cần sử dụng gấp!`;
+            } else if (totalCount > 0) {
                 banner.classList.remove('hidden');
-                if(content) content.innerText = `Tất cả ${approvedProducts.length} thực phẩm đã lưu đều còn rất tươi ngon!`;
+                if (content) content.innerText = `Tất cả ${totalCount} thực phẩm đã lưu đều còn rất tươi ngon!`;
             } else {
                 banner.classList.add('hidden');
             }
