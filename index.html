@@ -19,7 +19,11 @@
         }
     </script>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@0.263.1"></script>
+    <script>
+        // Dự phòng: nếu CDN chính lỗi thì tải Lucide từ jsDelivr (bắt buộc cố định phiên bản)
+        if (!window.lucide) document.write('<script src="https://cdn.jsdelivr.net/npm/lucide@0.263.1"><\/script>');
+    </script>
     <!-- QRCode.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- HTML5 QrCode Scanner Library -->
@@ -618,6 +622,9 @@
         import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, startAfter, limit, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // Vẽ icon an toàn: nếu thư viện icon không tải được, app vẫn chạy bình thường (chỉ thiếu icon)
+        function safeIcons() { try { if (window.lucide) window.lucide.createIcons(); } catch (e) { console.warn("Lucide error:", e); } }
+
         // Cấu hình Firebase dự án fresh-track-dt
         const firebaseConfig = {
             apiKey: "AIzaSyA-X8rKO3JmIUIlEYu6npP_mFIdRNY44lo",
@@ -1052,14 +1059,14 @@ function updateSyncBadge(status, text) {
         function updateThemeIcon(isDark) {
             const iconEl = document.getElementById('themeIcon');
             if (iconEl) iconEl.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-            lucide.createIcons();
+            safeIcons();
         }
 
         window.onload = function() {
             initDarkMode();
             initLiveClock();
             applyAdminUIDistinction();
-            lucide.createIcons();
+            safeIcons();
             initNotificationsState();
             setLoading(true);
             initFirebase();
@@ -1348,7 +1355,7 @@ function updateSyncBadge(status, text) {
             qrBox.innerHTML = '';
             new QRCode(qrBox, { text: directUrl, width: 120, height: 120, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
 
-            lucide.createIcons();
+            safeIcons();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -1504,7 +1511,7 @@ function updateSyncBadge(status, text) {
                 });
             }
 
-            lucide.createIcons();
+            safeIcons();
         }
 
         window.loadMoreProducts = function() {
@@ -1899,7 +1906,7 @@ function updateSyncBadge(status, text) {
             toast.querySelector('span').textContent = msg;
 
             container.appendChild(toast);
-            lucide.createIcons();
+            safeIcons();
 
             setTimeout(() => toast.classList.remove('translate-y-4', 'opacity-0'), 10);
             setTimeout(() => {
